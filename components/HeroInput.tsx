@@ -17,10 +17,10 @@ function isURL(str: string): boolean {
   return urlPattern.test(str.trim());
 }
 
-export default function HeroInput({ 
-  value, 
-  onChange, 
-  onSubmit, 
+export default function HeroInput({
+  value,
+  onChange,
+  onSubmit,
   placeholder = "Describe what you want to build...",
   className = "",
   showSearchFeatures = true
@@ -36,7 +36,7 @@ export default function HeroInput({
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = textareaRef.current.scrollHeight + 'px';
     }
-    
+
     // Show tiles animation for search terms (only if search features are enabled)
     if (showSearchFeatures && value.trim() && !isURL(value) && isFocused) {
       setShowTiles(true);
@@ -58,60 +58,60 @@ export default function HeroInput({
         className=""
       />
 
-      <div className="relative">
-        <label className="p-16 flex gap-8 items-start w-full relative border-b border-black-alpha-5">
-          <div className="mt-2 flex-shrink-0">
+      <div className="relative bg-surfaceHighlight rounded-20 border border-border/50 focus-within:border-primary focus-within:shadow-[0_0_20px_rgba(6,182,212,0.2)] transition-all duration-300">
+        <label className="p-16 flex gap-8 items-start w-full relative border-b border-border/10">
+          <div className="mt-2 flex-shrink-0 text-primary">
             {showSearchFeatures ? (
               isURLInput ? (
                 // Link icon for URLs
-                <svg 
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 20 20" 
-                  fill="none" 
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="opacity-40"
+                  className="opacity-80"
                 >
-                  <path d="M9 11L11 9M11 9L15 5M11 9L5 15M15 5L13 3M15 5L17 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M7 13L5 15L3 13" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M13 7L15 5L17 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M9 11L11 9M11 9L15 5M11 9L5 15M15 5L13 3M15 5L17 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M7 13L5 15L3 13" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M13 7L15 5L17 7" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               ) : (
                 // Search icon for search terms
-                <svg 
-                  width="20" 
-                  height="20" 
-                  viewBox="0 0 20 20" 
-                  fill="none" 
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 20 20"
+                  fill="none"
                   xmlns="http://www.w3.org/2000/svg"
-                  className="opacity-40"
+                  className="opacity-80"
                 >
-                  <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M12.5 12.5L16.5 16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" strokeWidth="1.5" />
+                  <path d="M12.5 12.5L16.5 16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
                 </svg>
               )
             ) : (
               // Default globe icon for generation page
-              <svg 
-                width="20" 
-                height="20" 
-                viewBox="0 0 20 20" 
-                fill="none" 
+              <svg
+                width="20"
+                height="20"
+                viewBox="0 0 20 20"
+                fill="none"
                 xmlns="http://www.w3.org/2000/svg"
-                className="opacity-40"
+                className="opacity-80"
               >
-                <circle cx="10" cy="10" r="9.5" stroke="currentColor"/>
-                <path d="M10 2C10 5.5 10 14.5 10 18" stroke="currentColor" strokeLinecap="round"/>
-                <path d="M2 10C5.5 10 14.5 10 18 10" stroke="currentColor" strokeLinecap="round"/>
-                <ellipse cx="10" cy="10" rx="3.5" ry="9.5" stroke="currentColor"/>
-                <ellipse cx="10" cy="10" rx="6" ry="9.5" stroke="currentColor"/>
+                <circle cx="10" cy="10" r="9.5" stroke="currentColor" />
+                <path d="M10 2C10 5.5 10 14.5 10 18" stroke="currentColor" strokeLinecap="round" />
+                <path d="M2 10C5.5 10 14.5 10 18 10" stroke="currentColor" strokeLinecap="round" />
+                <ellipse cx="10" cy="10" rx="3.5" ry="9.5" stroke="currentColor" />
+                <ellipse cx="10" cy="10" rx="6" ry="9.5" stroke="currentColor" />
               </svg>
             )}
           </div>
 
           <textarea
             ref={textareaRef}
-            className="w-full bg-transparent text-body-input text-accent-black placeholder:text-black-alpha-48 resize-none outline-none min-h-[24px] leading-6"
+            className="w-full bg-transparent text-body-input text-foreground placeholder:text-gray-500 resize-none outline-none min-h-[24px] leading-6 font-mono"
             placeholder={placeholder}
             value={value}
             onChange={(e) => onChange(e.target.value)}
@@ -137,27 +137,26 @@ export default function HeroInput({
             disabled={!value.trim()}
             className={`
               button relative rounded-10 px-8 py-8 text-label-medium font-medium
-              flex items-center justify-center gap-6
-              ${value.trim() 
-                ? 'button-primary text-accent-white active:scale-[0.995]' 
-                : 'bg-black-alpha-4 text-black-alpha-24 cursor-not-allowed'
+              flex items-center justify-center gap-6 transition-all duration-300
+              ${value.trim()
+                ? 'bg-primary hover:bg-primary/90 text-black shadow-[0_0_15px_rgba(6,182,212,0.4)] hover:shadow-[0_0_20px_rgba(6,182,212,0.6)] active:scale-[0.995]'
+                : 'bg-surface border border-border text-gray-600 cursor-not-allowed'
               }
             `}
           >
-            {value.trim() && <div className="button-background absolute inset-0 rounded-10 pointer-events-none" />}
             {value.trim() ? (
               <>
                 <span className="px-6 relative">Re-imagine Site</span>
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M8.5 3.5L13 8L8.5 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M8.5 3.5L13 8L8.5 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </>
             ) : (
               <div className="w-60 flex items-center justify-center">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M8.5 3.5L13 8L8.5 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M3 8H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M8.5 3.5L13 8L8.5 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
             )}

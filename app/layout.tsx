@@ -1,28 +1,21 @@
 import type { Metadata } from "next";
-import { Inter, Roboto_Mono } from "next/font/google";
-import localFont from "next/font/local";
+import { Inter, Questrial, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ["latin"],
   variable: "--font-inter"
 });
 
-const geistSans = localFont({
-  src: "./fonts/GeistVF.woff",
-  variable: "--font-geist-sans",
-  weight: "100 900",
-});
-
-const geistMono = localFont({
-  src: "./fonts/GeistMonoVF.woff",
-  variable: "--font-geist-mono",
-  weight: "100 900",
-});
-
-const robotoMono = Roboto_Mono({
+const questrial = Questrial({
+  weight: "400",
   subsets: ["latin"],
-  variable: "--font-roboto-mono",
+  variable: "--font-questrial",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains-mono",
 });
 
 export const metadata: Metadata = {
@@ -37,8 +30,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.variable} ${geistSans.variable} ${geistMono.variable} ${robotoMono.variable} font-sans`}>
-        {children}
+      <body
+        className={`${inter.variable} ${questrial.variable} ${jetbrainsMono.variable} font-sans`}
+        suppressHydrationWarning
+      >  {children}
       </body>
     </html>
   );

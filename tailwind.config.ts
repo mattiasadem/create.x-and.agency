@@ -75,200 +75,22 @@ const themeConfig: Config = {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-geist-sans)", "var(--font-inter)", ...defaultTheme.fontFamily.sans],
-        mono: ["var(--font-geist-mono)", ...defaultTheme.fontFamily.mono],
-        ascii: ["var(--font-roboto-mono)", ...defaultTheme.fontFamily.mono]
-      },
-      fontSize: {
-        "title-h1": [
-          "60px",
-          {
-            "lineHeight": "64px",
-            "letterSpacing": "-0.3px",
-            "fontWeight": "500"
-          }
-        ],
-        "title-h2": [
-          "52px",
-          {
-            "lineHeight": "56px",
-            "letterSpacing": "-0.52px",
-            "fontWeight": "500"
-          }
-        ],
-        "title-h3": [
-          "40px",
-          {
-            "lineHeight": "44px",
-            "letterSpacing": "-0.4px",
-            "fontWeight": "500"
-          }
-        ],
-        "title-h4": [
-          "32px",
-          {
-            "lineHeight": "36px",
-            "letterSpacing": "-0.32px",
-            "fontWeight": "500"
-          }
-        ],
-        "title-h5": [
-          "24px",
-          {
-            "lineHeight": "32px",
-            "letterSpacing": "-0.24px",
-            "fontWeight": "500"
-          }
-        ],
-        "body-x-large": [
-          "20px",
-          {
-            "lineHeight": "28px",
-            "letterSpacing": "-0.1px",
-            "fontWeight": "400"
-          }
-        ],
-        "body-large": [
-          "16px",
-          {
-            "lineHeight": "24px",
-            "letterSpacing": "0px",
-            "fontWeight": "400"
-          }
-        ],
-        "body-medium": [
-          "14px",
-          {
-            "lineHeight": "20px",
-            "letterSpacing": "0.14px",
-            "fontWeight": "400"
-          }
-        ],
-        "body-small": [
-          "13px",
-          {
-            "lineHeight": "20px",
-            "letterSpacing": "0px",
-            "fontWeight": "400"
-          }
-        ],
-        "body-input": [
-          "15px",
-          {
-            "lineHeight": "24px",
-            "letterSpacing": "0px",
-            "fontWeight": "400"
-          }
-        ],
-        "label-x-large": [
-          "20px",
-          {
-            "lineHeight": "28px",
-            "letterSpacing": "-0.1px",
-            "fontWeight": "450"
-          }
-        ],
-        "label-large": [
-          "16px",
-          {
-            "lineHeight": "24px",
-            "letterSpacing": "0px",
-            "fontWeight": "450"
-          }
-        ],
-        "label-medium": [
-          "14px",
-          {
-            "lineHeight": "20px",
-            "letterSpacing": "0px",
-            "fontWeight": "450"
-          }
-        ],
-        "label-small": [
-          "13px",
-          {
-            "lineHeight": "20px",
-            "letterSpacing": "0px",
-            "fontWeight": "450"
-          }
-        ],
-        "label-x-small": [
-          "12px",
-          {
-            "lineHeight": "20px",
-            "letterSpacing": "0px",
-            "fontWeight": "450"
-          }
-        ],
-        "mono-medium": [
-          "14px",
-          {
-            "lineHeight": "22px",
-            "letterSpacing": "0px",
-            "fontWeight": "400"
-          }
-        ],
-        "mono-small": [
-          "13px",
-          {
-            "lineHeight": "20px",
-            "letterSpacing": "0px",
-            "fontWeight": "500"
-          }
-        ],
-        "mono-x-small": [
-          "12px",
-          {
-            "lineHeight": "16px",
-            "letterSpacing": "0px",
-            "fontWeight": "400"
-          }
-        ],
-        "title-blog": [
-          "28px",
-          {
-            "lineHeight": "36px",
-            "letterSpacing": "-0.28px",
-            "fontWeight": "500"
-          }
-        ]
+        sans: ["var(--font-inter)", "sans-serif"],
+        display: ["var(--font-questrial)", "sans-serif"],
+        mono: ["var(--font-jetbrains-mono)", "monospace"],
       },
       colors: {
+        background: "#020405",
+        surface: "#0A0F14",
+        surfaceHighlight: "#151E26",
+        primary: {
+          DEFAULT: "#06B6D4",
+          highlight: "#22D3EE",
+          foreground: "#000000",
+        },
+        border: "rgba(6,182,212,0.1)",
         transparent: "transparent",
         current: "currentColor",
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
-        destructive: {
-          DEFAULT: "hsl(var(--destructive))",
-          foreground: "hsl(var(--destructive-foreground))",
-        },
-        muted: {
-          DEFAULT: "hsl(var(--muted))",
-          foreground: "hsl(var(--muted-foreground))",
-        },
-        accent: {
-          DEFAULT: "hsl(var(--accent))",
-          foreground: "hsl(var(--accent-foreground))",
-        },
-        popover: {
-          DEFAULT: "hsl(var(--popover))",
-          foreground: "hsl(var(--popover-foreground))",
-        },
-        card: {
-          DEFAULT: "hsl(var(--card))",
-          foreground: "hsl(var(--card-foreground))",
-        },
         ...colors
       },
       screens: {
@@ -324,7 +146,51 @@ const themeConfig: Config = {
         }
 
         return radius;
-      })()
+      })(),
+      keyframes: {
+        "fade-in-up": {
+          "0%": {
+            opacity: "0",
+            transform: "translateY(20px)",
+          },
+          "100%": {
+            opacity: "1",
+            transform: "translateY(0)",
+          },
+        },
+        "pulse-slow": {
+          "0%, 100%": {
+            opacity: "1",
+          },
+          "50%": {
+            opacity: "0.5",
+          },
+        },
+        "glow-slow": {
+          "0%, 100%": {
+            transform: "scale(1)",
+            opacity: "1",
+          },
+          "50%": {
+            transform: "scale(1.05)",
+            opacity: "0.8",
+          },
+        },
+        scan: {
+          "0%": {
+            transform: "translateY(-100%)",
+          },
+          "100%": {
+            transform: "translateY(100vh)",
+          },
+        },
+      },
+      animation: {
+        "fade-in-up": "fade-in-up 0.6s ease-out forwards",
+        "pulse-slow": "pulse-slow 4s ease-in-out infinite",
+        "glow-slow": "glow-slow 3s ease-in-out infinite",
+        scan: "scan 4s linear infinite",
+      },
     }
   },
   plugins: [

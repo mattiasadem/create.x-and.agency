@@ -24,32 +24,32 @@ export default function CodeApplicationProgress({ state }: CodeApplicationProgre
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
         transition={{ duration: 0.3 }}
-        className="inline-block bg-gray-100 rounded-[10px] p-3 mt-2"
+        className="inline-block bg-surface border border-border/50 rounded-[10px] p-3 mt-2 shadow-[0_0_15px_rgba(6,182,212,0.1)]"
       >
         <div className="flex items-center gap-3">
           {/* Rotating loading indicator */}
           <motion.div
             animate={{ rotate: 360 }}
             transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-4 h-4"
+            className="w-4 h-4 text-primary"
           >
             <svg className="w-full h-full" viewBox="0 0 24 24" fill="none">
-              <circle 
-                cx="12" 
-                cy="12" 
-                r="10" 
-                stroke="currentColor" 
-                strokeWidth="2" 
+              <circle
+                cx="12"
+                cy="12"
+                r="10"
+                stroke="currentColor"
+                strokeWidth="2"
                 strokeLinecap="round"
                 strokeDasharray="31.416"
                 strokeDashoffset="10"
-                className="text-gray-700"
+                className="opacity-50"
               />
             </svg>
           </motion.div>
 
           {/* Simple loading text */}
-          <div className="text-sm font-medium text-gray-700">
+          <div className="text-sm font-medium text-primary-foreground">
             Applying to sandbox...
           </div>
         </div>

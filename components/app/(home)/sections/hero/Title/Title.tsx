@@ -1,10 +1,7 @@
 "use client";
 
-// import dynamic from "next/dynamic";
-// import { useRef, useEffect, forwardRef } from "react";
+import { useState, useEffect } from "react";
 
-// const originalText =
-//   "";
 
 type Options = {
   randomizeChance?: number;
@@ -80,184 +77,43 @@ export const encryptText = (
   return result;
 };
 
-// const Wrapper = forwardRef<
-//   HTMLDivElement,
-//   React.HTMLAttributes<HTMLDivElement>
-// >((props, ref) => {
-//   return (
-//     <div className="text-title-h1 mx-auto text-center [&_span]:text-heat-100 mb-12 lg:mb-16">
-//       <div {...props} className="hidden lg:contents" ref={ref} />
-//       <div
-//         className="lg:hidden contents"
-//         dangerouslySetInnerHTML={{ __html: originalText }}
-//       />
-//     </div>
-//   );
-// });
-
-// Wrapper.displayName = "Wrapper";
-
-// export default dynamic(() => Promise.resolve(HomeHeroTitle), {
-//   ssr: false,
-//   loading: () => (
-//     <Wrapper
-//       dangerouslySetInnerHTML={{ __html: encryptText(originalText, 0) }}
-//     />
-//   ),
-// });
-
-// function HomeHeroTitle() {
-//   const textRef = useRef<HTMLDivElement>(null);
-
-//   useEffect(() => {
-//     if (window.innerWidth < 996) {
-//       return;
-//     }
-
-//     let progress = 0;
-//     let increaseProgress = -10;
-
-//     const animate = () => {
-//       increaseProgress = (increaseProgress + 1) % 5;
-
-//       if (increaseProgress === 4) {
-//         progress += 0.3;
-//       }
-
-//       if (progress > 1) {
-//         progress = 1;
-//         textRef.current!.innerHTML = encryptText(originalText, progress);
-
-//         return;
-//       }
-
-//       textRef.current!.innerHTML = encryptText(originalText, progress);
-
-//       const interval = 50 + progress * 20;
-//       setTimeout(animate, interval);
-//     };
-
-//     animate();
-//   }, []);
-
-//   return (
-//     <Wrapper
-//       dangerouslySetInnerHTML={{ __html: encryptText(originalText, 0) }}
-//       ref={textRef}
-//     />
-//   );
-// }
-
-// import dynamic from "next/dynamic";
-// import { useRef, useEffect, forwardRef } from "react";
-
-// const originalText =
-//   "Turn websites into <br class='lg-max:hidden'><span>LLM-ready</span> data";
-
-// type Options = {
-//   randomizeChance?: number;
-//   reversed?: boolean;
-// };
-
-// export const encryptText = (
-//   text: string,
-//   progress: number,
-//   _options?: Options,
-// ) => {
-//   const options = {
-//     randomizeChance: 0.7,
-//     ..._options,
-//   };
-
-//   const encryptionChars = "a-zA-Z0-9*=?!";
-//   const skipTags = ["<br class='lg-max:hidden'>", "<span>", "</span>"];
-
-//   // Calculate how many characters should be encrypted
-//   const totalChars = text.length;
-//   const encryptedCount = Math.floor(totalChars * (1 - progress));
-
-//   let result = "";
-//   let charIndex = 1;
-
-//   for (let i = 0; i < text.length; i++) {
-//     const char = text[i];
-
-//     // Check if we're at the start of a tag to skip
-//     let shouldSkip = false;
-
-//     for (const tag of skipTags) {
-//       if (text.substring(i, i + tag.length) === tag) {
-//         result += tag;
-//         i += tag.length - 1; // -1 because loop will increment
-//         shouldSkip = true;
-//         break;
-//       }
-//     }
-
-//     if (shouldSkip) continue;
-
-//     // Skip spaces - keep them as is
-//     if (char === " ") {
-//       result += char;
-//       charIndex++;
-//       continue;
-//     }
-
-//     // If this character should be encrypted
-//     if (
-//       options.reversed
-//         ? charIndex < encryptedCount
-//         : text.length - charIndex < encryptedCount
-//     ) {
-//       // 40% chance to show original character, 60% chance to encrypt
-//       if (Math.random() < options.randomizeChance) {
-//         result += char;
-//       } else {
-//         // Use random character from encryption set
-//         const randomIndex = Math.floor(Math.random() * encryptionChars.length);
-//         result += encryptionChars[randomIndex];
-//       }
-//     } else {
-//       // Keep original character
-//       result += char;
-//     }
-
-//     charIndex++;
-//   }
-
-//   return result;
-// };
-
-// const Wrapper = forwardRef<
-//   HTMLDivElement,
-//   React.HTMLAttributes<HTMLDivElement>
-// >((props, ref) => {
-//   return (
-//     <div className="text-title-h1 mx-auto text-center [&_span]:text-heat-100 mb-12 lg:mb-16">
-//       <div {...props} className="hidden lg:contents" ref={ref} />
-//       <div
-//         className="lg:hidden contents"
-//         dangerouslySetInnerHTML={{ __html: originalText }}
-//       />
-//     </div>
-//   );
-// });
-
-// Wrapper.displayName = "Wrapper";
-
-// export default dynamic(() => Promise.resolve(HomeHeroTitle), {
-//   ssr: false,
-//   loading: () => (
-//     <Wrapper
-//       dangerouslySetInnerHTML={{ __html: encryptText(originalText, 0) }}
-//     />
-//   ),
-// });
-
 export default function HomeHeroTitle() {
+  const [index, setIndex] = useState(0);
+  const words = ["Websites", "Apps", "AI Agents", "Automations", "Brands", "Products"];
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setIndex((prevIndex) => (prevIndex + 1) % words.length);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [words.length]);
+
   return (
-    <h1 className="text-title-h1 mx-auto text-center [&_span]:text-heat-100 mb-12 lg:mb-16">
-     Open Lovable <span>v3</span>
-    </h1>
+    <div className="mx-auto text-center mb-12 lg:mb-16">
+      <style jsx>{`
+        @keyframes cool-slide-up {
+            0% {
+                opacity: 0;
+                transform: translateY(20px) scale(0.9);
+                filter: blur(4px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+                filter: blur(0);
+            }
+        }
+        .animate-word {
+            animation: cool-slide-up 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+      `}</style>
+      <h1 className="text-4xl md:text-6xl lg:text-7xl font-normal font-display tracking-wide text-white flex flex-col items-center justify-center gap-2">
+        <span>You can create</span>
+        <span key={index} className="animate-word bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent font-display font-normal whitespace-nowrap pb-2">
+          {words[index]}
+        </span>
+      </h1>
+    </div>
   );
 }
