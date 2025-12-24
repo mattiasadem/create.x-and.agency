@@ -8,7 +8,7 @@ export default function HomeHeroBadge() {
         href="#"
         onClick={(e) => e.preventDefault()}
       >
-        Introducing x-and V1
+        Introducing create x-and V1
       </Link>
     </div>
   );

@@ -24,7 +24,7 @@ const Footer: React.FC = () => {
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="text-cyan-400">
                             <path d="M13 2L3 14H12L11 22L21 10H12L13 2Z" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                         </svg>
-                        x-and
+                        create x-and
                     </div>
                 </div>
 
@@ -72,7 +72,7 @@ const Footer: React.FC = () => {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 mt-12 pt-8 border-t border-white/5 text-center text-gray-600 text-xs">
-                © 2025 x-and - All rights reserved.
+                © 2025 create x-and - All rights reserved.
             </div>
         </footer>
     );
