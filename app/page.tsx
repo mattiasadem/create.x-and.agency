@@ -13,6 +13,7 @@ import { HeaderProvider } from "@/components/shared/header/HeaderContext";
 // Import hero section components
 import HomeHeroBadge from "@/components/app/(home)/sections/hero/Badge/Badge";
 import HomeHeroTitle from "@/components/app/(home)/sections/hero/Title/Title";
+
 import { Menu, X, ChevronDown, Github, Twitter, Disc, ArrowRight, Paperclip } from 'lucide-react';
 
 interface SearchResult {
@@ -241,9 +242,9 @@ export default function HomePage() {
       <div className="min-h-screen bg-background text-foreground selection:bg-cyan-500/20 selection:text-cyan-200 relative overflow-x-hidden">
 
         {/* Ported Header */}
-        <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${isScrolled ? 'bg-[#020405]/80 backdrop-blur-lg border-b border-white/5' : 'bg-transparent'}`}>
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between h-16">
+        <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 h-64 header ${isScrolled ? 'bg-[#020405]/80 backdrop-blur-lg border-b border-white/5' : 'bg-transparent'}`}>
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full">
+            <div className="flex items-center justify-between h-full">
               {/* Logo */}
               <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer">
                 <span className="text-xl font-display font-normal tracking-wide text-white">x-and</span>
@@ -313,7 +314,7 @@ export default function HomePage() {
         </header>
 
         {/* Hero Section */}
-        <section className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-16" id="home-hero">
+        <section className="relative min-h-screen flex flex-col justify-center overflow-hidden pt-64" id="home-hero">
           <style>{`
             @keyframes cool-slide-up {
                 0% {
@@ -831,6 +832,7 @@ export default function HomePage() {
           </section>
         )
         }
+
 
       </div >
 

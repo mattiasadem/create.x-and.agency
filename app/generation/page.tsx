@@ -23,6 +23,7 @@ import {
   SiCss3,
   SiJson
 } from '@/lib/icons';
+import CircuitBackground from '@/components/app/(home)/sections/hero/CircuitBackground';
 import { motion } from 'framer-motion';
 import CodeApplicationProgress, { type CodeApplicationState } from '@/components/CodeApplicationProgress';
 
@@ -1148,8 +1149,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
         <div className="absolute inset-0 flex overflow-hidden">
           {/* File Explorer - Hide during edits */}
           {!generationProgress.isEdit && (
-            <div className="w-[250px] border-r border-gray-200 bg-white flex flex-col flex-shrink-0">
-              <div className="p-4 bg-gray-100 text-gray-900 flex items-center justify-between">
+            <div className="w-[250px] border-r border-white/10 bg-[#0a0f14]/90 backdrop-blur-md flex flex-col flex-shrink-0">
+              <div className="p-4 bg-white/5 text-gray-200 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <BsFolderFill style={{ width: '16px', height: '16px' }} />
                   <span className="text-sm font-medium">Explorer</span>
@@ -1233,8 +1234,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                                     <div
                                       key={fullPath}
                                       className={`flex items-center gap-2 py-0.5 px-3 rounded cursor-pointer transition-all ${isSelected
-                                          ? 'bg-blue-500 text-white'
-                                          : 'text-gray-700 hover:bg-gray-100'
+                                        ? 'bg-blue-500 text-white'
+                                        : 'text-gray-700 hover:bg-gray-100'
                                         }`}
                                       onClick={() => handleFileClick(fullPath)}
                                     >
@@ -1297,8 +1298,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                 {/* Show selected file if one is selected */}
                 {selectedFile ? (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="bg-black border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                      <div className="px-4 py-2 bg-[#36322F] text-white flex items-center justify-between">
+                    <div className="bg-black/50 border border-white/10 rounded-lg overflow-hidden shadow-sm">
+                      <div className="px-4 py-2 bg-[#1a1f24] text-gray-200 flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           {getFileIcon(selectedFile)}
                           <span className="font-mono text-sm">{selectedFile}</span>
@@ -1356,8 +1357,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                         </div>
                       </div>
                     ) : (
-                      <div className="bg-black border border-gray-200 rounded-lg overflow-hidden">
-                        <div className="px-4 py-2 bg-gray-100 text-gray-900 flex items-center justify-between">
+                      <div className="bg-black/50 border border-white/10 rounded-lg overflow-hidden">
+                        <div className="px-4 py-2 bg-white/5 text-gray-200 flex items-center justify-between">
                           <div className="flex items-center gap-2">
                             <div className="w-16 h-16 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
                             <span className="font-mono text-sm">Streaming code...</span>
@@ -1391,9 +1392,9 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                               <div className="w-16 h-16 border-2 border-white border-t-transparent rounded-full animate-spin" />
                               <span className="font-mono text-sm">{generationProgress.currentFile.path}</span>
                               <span className={`px-2 py-0.5 text-xs rounded ${generationProgress.currentFile.type === 'css' ? 'bg-blue-600 text-white' :
-                                  generationProgress.currentFile.type === 'javascript' ? 'bg-yellow-600 text-white' :
-                                    generationProgress.currentFile.type === 'json' ? 'bg-green-600 text-white' :
-                                      'bg-gray-200 text-gray-700'
+                                generationProgress.currentFile.type === 'javascript' ? 'bg-yellow-600 text-white' :
+                                  generationProgress.currentFile.type === 'json' ? 'bg-green-600 text-white' :
+                                    'bg-gray-200 text-gray-700'
                                 }`}>
                                 {generationProgress.currentFile.type === 'javascript' ? 'JSX' : generationProgress.currentFile.type.toUpperCase()}
                               </span>
@@ -1432,9 +1433,9 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                               <span className="font-mono text-sm">{file.path}</span>
                             </div>
                             <span className={`px-2 py-0.5 text-xs rounded ${file.type === 'css' ? 'bg-blue-600 text-white' :
-                                file.type === 'javascript' ? 'bg-yellow-600 text-white' :
-                                  file.type === 'json' ? 'bg-green-600 text-white' :
-                                    'bg-gray-200 text-gray-700'
+                              file.type === 'javascript' ? 'bg-yellow-600 text-white' :
+                                file.type === 'json' ? 'bg-green-600 text-white' :
+                                  'bg-gray-200 text-gray-700'
                               }`}>
                               {file.type === 'javascript' ? 'JSX' : file.type.toUpperCase()}
                             </span>
@@ -1629,8 +1630,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                           <span
                             key={index}
                             className={`px-2 py-1 text-xs rounded-full transition-all ${codeApplicationState.installedPackages?.includes(pkg)
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-gray-100 text-gray-600'
+                              ? 'bg-green-100 text-green-700'
+                              : 'bg-gray-100 text-gray-600'
                               }`}
                           >
                             {pkg}
@@ -3275,9 +3276,14 @@ Focus on the key sections and content, making it clean and modern.`;
 
   return (
     <HeaderProvider>
-      <div className="font-sans bg-background text-foreground h-screen flex flex-col">
-        <div className="bg-white py-[15px] py-[8px] border-b border-border-faint flex items-center justify-between shadow-sm">
-          <HeaderBrandKit />
+      <div className="min-h-screen bg-[#020405] text-white selection:bg-cyan-500/20 selection:text-cyan-200 relative overflow-hidden font-sans flex flex-col">
+        <CircuitBackground />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(2,4,5,0)_0%,_rgba(2,4,5,0.8)_100%)] pointer-events-none z-0" />
+
+        <div className="relative z-50 bg-[#0a0f14]/80 backdrop-blur-lg h-[64px] border-b border-white/10 flex items-center justify-between shadow-sm px-6 header">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
+            <span className="text-xl font-display font-normal tracking-wide text-white">x-and</span>
+          </div>
           <div className="flex items-center gap-2">
             {/* Model Selector - Left side */}
             <select
@@ -3292,7 +3298,7 @@ Focus on the key sections and content, making it clean and modern.`;
                 }
                 router.push(`/generation?${params.toString()}`);
               }}
-              className="px-3 py-1.5 text-sm text-gray-900 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:border-gray-300 transition-colors"
+              className="px-3 py-1.5 text-sm text-white bg-white/5 border border-white/10 rounded-lg focus:outline-none focus:border-white/20 transition-colors"
             >
               {appConfig.ai.availableModels.map(model => (
                 <option key={model} value={model}>
@@ -3302,7 +3308,7 @@ Focus on the key sections and content, making it clean and modern.`;
             </select>
             <button
               onClick={() => createSandbox()}
-              className="p-8 rounded-lg transition-colors bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100"
+              className="p-8 rounded-lg transition-colors bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10"
               title="Create new sandbox"
             >
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3311,7 +3317,7 @@ Focus on the key sections and content, making it clean and modern.`;
             </button>
             <button
               onClick={reapplyLastGeneration}
-              className="p-8 rounded-lg transition-colors bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-8 rounded-lg transition-colors bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Re-apply last generation"
               disabled={!conversationContext.lastGeneratedCode || !sandboxData}
             >
@@ -3322,7 +3328,7 @@ Focus on the key sections and content, making it clean and modern.`;
             <button
               onClick={downloadZip}
               disabled={!sandboxData}
-              className="p-8 rounded-lg transition-colors bg-gray-50 border border-gray-200 text-gray-700 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-8 rounded-lg transition-colors bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed"
               title="Download your Vite app as ZIP"
             >
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -3333,12 +3339,12 @@ Focus on the key sections and content, making it clean and modern.`;
           </div>
         </div>
 
-        <div className="flex-1 flex overflow-hidden">
+        <div className="flex-1 flex overflow-hidden relative z-10">
           {/* Center Panel - AI Chat (1/3 of remaining width) */}
-          <div className="flex-1 max-w-[400px] flex flex-col border-r border-border bg-background">
+          <div className="flex-1 max-w-[400px] flex flex-col border-r border-white/10 bg-[#0a0f14]/90 backdrop-blur-sm">
             {/* Sidebar Input Component */}
             {!hasInitialSubmission ? (
-              <div className="p-4 border-b border-border">
+              <div className="p-4 border-b border-white/10">
                 <SidebarInput
                   onSubmit={(url, style, model, instructions) => {
                     // Mark that we've had an initial submission
@@ -3463,18 +3469,18 @@ Focus on the key sections and content, making it clean and modern.`;
                     <div className={`flex ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}>
                       <div className="block w-full">
                         <div className={`block px-6 py-4 ${msg.type === 'user' ? 'bg-surfaceHighlight text-white ml-auto max-w-[80%] rounded-[20px] rounded-tr-sm' :
-                            msg.type === 'ai' ? 'bg-transparent text-foreground mr-auto max-w-[80%] border-l-2 border-primary pl-4 rounded-none' :
-                              msg.type === 'system' ? 'bg-surface/50 border border-border/30 text-gray-400 text-sm max-w-[90%] mx-auto rounded-lg' :
-                                msg.type === 'command' ? 'bg-surface border border-border text-gray-400 font-mono text-sm max-w-[90%] mx-auto rounded-lg' :
-                                  msg.type === 'error' ? 'bg-red-950/30 text-red-200 text-sm border border-red-900/50 max-w-[90%] mx-auto rounded-lg' :
-                                    'bg-surface text-gray-400 text-sm'
+                          msg.type === 'ai' ? 'bg-transparent text-foreground mr-auto max-w-[80%] border-l-2 border-primary pl-4 rounded-none' :
+                            msg.type === 'system' ? 'bg-surface/50 border border-border/30 text-gray-400 text-sm max-w-[90%] mx-auto rounded-lg' :
+                              msg.type === 'command' ? 'bg-surface border border-border text-gray-400 font-mono text-sm max-w-[90%] mx-auto rounded-lg' :
+                                msg.type === 'error' ? 'bg-red-950/30 text-red-200 text-sm border border-red-900/50 max-w-[90%] mx-auto rounded-lg' :
+                                  'bg-surface text-gray-400 text-sm'
                           }`}>
                           {msg.type === 'command' ? (
                             <div className="flex items-start gap-2">
                               <span className={`text-xs ${msg.metadata?.commandType === 'input' ? 'text-blue-400' :
-                                  msg.metadata?.commandType === 'error' ? 'text-red-400' :
-                                    msg.metadata?.commandType === 'success' ? 'text-green-400' :
-                                      'text-gray-400'
+                                msg.metadata?.commandType === 'error' ? 'text-red-400' :
+                                  msg.metadata?.commandType === 'success' ? 'text-green-400' :
+                                    'text-gray-400'
                                 }`}>
                                 {msg.metadata?.commandType === 'input' ? '$' : '>'}
                               </span>
@@ -3715,9 +3721,9 @@ Focus on the key sections and content, making it clean and modern.`;
                                     style={{ animationDelay: `${fileIdx * 30}ms` }}
                                   >
                                     <span className={`inline-block w-1.5 h-1.5 rounded-full ${fileType === 'css' ? 'bg-blue-400' :
-                                        fileType === 'javascript' ? 'bg-yellow-400' :
-                                          fileType === 'json' ? 'bg-green-400' :
-                                            'bg-gray-400'
+                                      fileType === 'javascript' ? 'bg-yellow-400' :
+                                        fileType === 'json' ? 'bg-green-400' :
+                                          'bg-gray-400'
                                       }`} />
                                     {fileName}
                                   </div>
@@ -3739,9 +3745,9 @@ Focus on the key sections and content, making it clean and modern.`;
                                   style={{ animationDelay: `${fileIdx * 30}ms` }}
                                 >
                                   <span className={`inline-block w-1.5 h-1.5 rounded-full ${file.type === 'css' ? 'bg-blue-400' :
-                                      file.type === 'javascript' ? 'bg-yellow-400' :
-                                        file.type === 'json' ? 'bg-green-400' :
-                                          'bg-gray-400'
+                                    file.type === 'javascript' ? 'bg-yellow-400' :
+                                      file.type === 'json' ? 'bg-green-400' :
+                                        'bg-gray-400'
                                     }`} />
                                   {file.path.split('/').pop()}
                                 </div>
@@ -3836,7 +3842,7 @@ Focus on the key sections and content, making it clean and modern.`;
               )}
             </div>
 
-            <div className="p-4 border-t border-border bg-background-base">
+            <div className="p-4 border-t border-white/10 bg-[#0a0f14]/90 backdrop-blur-sm">
               <HeroInput
                 value={aiChatInput}
                 onChange={setAiChatInput}
@@ -3847,17 +3853,16 @@ Focus on the key sections and content, making it clean and modern.`;
             </div>
           </div>
 
-          {/* Right Panel - Preview or Generation (2/3 of remaining width) */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div className="px-3 pt-4 pb-4 bg-white border-b border-gray-200 flex justify-between items-center">
+          <div className="flex-1 flex flex-col overflow-hidden bg-transparent">
+            <div className="px-3 pt-4 pb-4 bg-[#0a0f14]/90 border-b border-white/10 flex justify-between items-center backdrop-blur-sm">
               <div className="flex items-center gap-2">
                 {/* Toggle-style Code/View switcher */}
-                <div className="inline-flex bg-gray-100 border border-gray-200 rounded-md p-0.5">
+                <div className="inline-flex bg-white/5 border border-white/10 rounded-md p-0.5">
                   <button
                     onClick={() => setActiveTab('generation')}
                     className={`px-3 py-1 rounded transition-all text-xs font-medium ${activeTab === 'generation'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'bg-transparent text-gray-600 hover:text-gray-900'
+                      ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/30'
+                      : 'bg-transparent text-gray-400 hover:text-white'
                       }`}
                   >
                     <div className="flex items-center gap-1.5">
@@ -3870,8 +3875,8 @@ Focus on the key sections and content, making it clean and modern.`;
                   <button
                     onClick={() => setActiveTab('preview')}
                     className={`px-3 py-1 rounded transition-all text-xs font-medium ${activeTab === 'preview'
-                        ? 'bg-white text-gray-900 shadow-sm'
-                        : 'bg-transparent text-gray-600 hover:text-gray-900'
+                      ? 'bg-cyan-500/20 text-cyan-200 border border-cyan-500/30'
+                      : 'bg-transparent text-gray-400 hover:text-white'
                       }`}
                   >
                     <div className="flex items-center gap-1.5">
@@ -3929,10 +3934,6 @@ Focus on the key sections and content, making it clean and modern.`;
             </div>
           </div>
         </div>
-
-
-
-
       </div>
     </HeaderProvider>
   );
