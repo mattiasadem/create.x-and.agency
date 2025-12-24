@@ -110,6 +110,7 @@ function AISandboxPage() {
   const [hasInitialSubmission, setHasInitialSubmission] = useState<boolean>(false);
   const [fileStructure, setFileStructure] = useState<string>('');
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
+  const [autoSendPrompt, setAutoSendPrompt] = useState<string | null>(null);
 
   const [conversationContext, setConversationContext] = useState<{
     scrapedWebsites: Array<{ url: string; content: any; timestamp: Date }>;
@@ -175,6 +176,7 @@ function AISandboxPage() {
       const urlParam = searchParams.get('url');
       const templateParam = searchParams.get('template');
       const detailsParam = searchParams.get('details');
+      const promptParam = searchParams.get('prompt');
 
       // Then check session storage as fallback
       const storedUrl = urlParam || sessionStorage.getItem('targetUrl');
@@ -245,6 +247,10 @@ function AISandboxPage() {
 
         // Also set autoStart flag for the effect
         sessionStorage.setItem('autoStart', 'true');
+      }
+
+      if (promptParam) {
+        setAutoSendPrompt(promptParam);
       }
 
       // Clear old conversation
@@ -378,7 +384,21 @@ function AISandboxPage() {
       return () => clearTimeout(timer);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [shouldAutoGenerate, homeUrlInput, showHomeScreen]);
+
+  // Auto-send prompt from query params
+  useEffect(() => {
+    if (autoSendPrompt) {
+      // Small delay to ensure everything is ready
+      const timer = setTimeout(() => {
+        sendChatMessage(autoSendPrompt);
+        setAutoSendPrompt(null);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoSendPrompt]);
 
   const updateStatus = (text: string, active: boolean) => {
     setStatus({ text, active });
@@ -1713,8 +1733,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     return null;
   };
 
-  const sendChatMessage = async () => {
-    const message = aiChatInput.trim();
+  const sendChatMessage = async (overrideMessage?: string) => {
+    const message = overrideMessage || aiChatInput.trim();
     if (!message) return;
 
     if (!aiEnabled) {
@@ -1723,7 +1743,9 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     }
 
     addChatMessage(message, 'user');
-    setAiChatInput('');
+    if (!overrideMessage) {
+      setAiChatInput('');
+    }
 
     // Check for special commands
     const lowerMessage = message.toLowerCase().trim();
@@ -3282,9 +3304,9 @@ Focus on the key sections and content, making it clean and modern.`;
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(2,4,5,0)_0%,_rgba(2,4,5,0.8)_100%)] pointer-events-none z-0" />
 
         <div className="relative z-50 bg-[#0a0f14]/80 backdrop-blur-lg h-[64px] border-b border-white/10 flex items-center justify-between shadow-sm pl-12 pr-6 header">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
+          <a href="https://www.x-and.agency/" className="flex items-center gap-2 cursor-pointer no-underline">
             <span className="text-xl font-display font-normal tracking-wide text-white">create x-and</span>
-          </div>
+          </a>
           <div className="flex items-center gap-2">
             {/* Model Selector - Left side */}
             <select
