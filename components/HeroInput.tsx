@@ -121,7 +121,8 @@ export default function HeroInput({
             rows={1}
             style={{
               height: 'auto',
-              overflow: 'hidden'
+              maxHeight: '120px',
+              overflowY: 'auto'
             }}
             onInput={(e) => {
               const target = e.target as HTMLTextAreaElement;

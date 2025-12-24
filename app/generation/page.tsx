@@ -109,6 +109,7 @@ function AISandboxPage() {
   const [sandboxFiles, setSandboxFiles] = useState<Record<string, string>>({});
   const [hasInitialSubmission, setHasInitialSubmission] = useState<boolean>(false);
   const [fileStructure, setFileStructure] = useState<string>('');
+  const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
 
   const [conversationContext, setConversationContext] = useState<{
     scrapedWebsites: Array<{ url: string; content: any; timestamp: Date }>;
@@ -3276,13 +3277,13 @@ Focus on the key sections and content, making it clean and modern.`;
 
   return (
     <HeaderProvider>
-      <div className="min-h-screen bg-[#020405] text-white selection:bg-cyan-500/20 selection:text-cyan-200 relative overflow-hidden font-sans flex flex-col">
+      <div className="h-screen bg-[#020405] text-white selection:bg-cyan-500/20 selection:text-cyan-200 relative overflow-hidden font-sans flex flex-col">
         <CircuitBackground />
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(2,4,5,0)_0%,_rgba(2,4,5,0.8)_100%)] pointer-events-none z-0" />
 
-        <div className="relative z-50 bg-[#0a0f14]/80 backdrop-blur-lg h-[64px] border-b border-white/10 flex items-center justify-between shadow-sm px-6 header">
+        <div className="relative z-50 bg-[#0a0f14]/80 backdrop-blur-lg h-[64px] border-b border-white/10 flex items-center justify-between shadow-sm pl-12 pr-6 header">
           <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push('/')}>
-            <span className="text-xl font-display font-normal tracking-wide text-white">x-and</span>
+            <span className="text-xl font-display font-normal tracking-wide text-white">create x-and</span>
           </div>
           <div className="flex items-center gap-2">
             {/* Model Selector - Left side */}
@@ -3502,7 +3503,25 @@ Focus on the key sections and content, making it clean and modern.`;
                               </div>
                             </div>
                           ) : (
-                            <span className="text-sm">{msg.content}</span>
+                            <div className="flex flex-col gap-2">
+                              <span className="text-sm whitespace-pre-wrap">
+                                {expandedMessages.has(idx) || msg.content.length <= 300
+                                  ? msg.content
+                                  : `${msg.content.slice(0, 300)}...`}
+                              </span>
+                              {msg.content.length > 300 && !expandedMessages.has(idx) && (
+                                <button
+                                  onClick={() => {
+                                    const newSet = new Set(expandedMessages);
+                                    newSet.add(idx);
+                                    setExpandedMessages(newSet);
+                                  }}
+                                  className="text-xs text-cyan-400 hover:text-cyan-300 self-start font-medium mt-1"
+                                >
+                                  Show full message
+                                </button>
+                              )}
+                            </div>
                           )}
                         </div>
 

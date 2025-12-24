@@ -247,7 +247,7 @@ export default function HomePage() {
             <div className="flex items-center justify-between h-full">
               {/* Logo */}
               <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer">
-                <span className="text-xl font-display font-normal tracking-wide text-white">x-and</span>
+                <span className="text-xl font-display font-normal tracking-wide text-white">create x-and</span>
               </div>
 
               {/* Desktop Nav */}
@@ -443,7 +443,7 @@ export default function HomePage() {
             {/* Badge */}
             <div className="flex justify-center mb-6">
               <span className="px-3 py-1 rounded-full bg-cyan-950/30 border border-cyan-500/20 text-xs font-medium text-cyan-200 flex items-center gap-2 backdrop-blur-sm">
-                Introducing x-and V1
+                Introducing create x-and V1
               </span>
             </div>
 

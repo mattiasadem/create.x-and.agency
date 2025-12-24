@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Open Lovable v3",
+  title: "Create x-and",
   description: "Re-imagine any website in seconds with AI-powered website builder.",
 };
 
