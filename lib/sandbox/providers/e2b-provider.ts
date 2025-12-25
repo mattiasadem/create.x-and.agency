@@ -11,12 +11,12 @@ export class E2BProvider extends SandboxProvider {
    */
   async reconnect(sandboxId: string): Promise<boolean> {
     try {
-      
+
       // Try to connect to existing sandbox
       // Note: E2B SDK doesn't directly support reconnection, but we can try to recreate
       // For now, return false to indicate reconnection isn't supported
       // In the future, E2B may add this capability
-      
+
       return false;
     } catch (error) {
       console.error(`[E2BProvider] Failed to reconnect to sandbox ${sandboxId}:`, error);
@@ -26,7 +26,7 @@ export class E2BProvider extends SandboxProvider {
 
   async createSandbox(): Promise<SandboxInfo> {
     try {
-      
+
       // Kill existing sandbox if any
       if (this.sandbox) {
         try {
@@ -36,19 +36,19 @@ export class E2BProvider extends SandboxProvider {
         }
         this.sandbox = null;
       }
-      
+
       // Clear existing files tracking
       this.existingFiles.clear();
 
       // Create base sandbox
-      this.sandbox = await Sandbox.create({ 
+      this.sandbox = await Sandbox.create({
         apiKey: this.config.e2b?.apiKey || process.env.E2B_API_KEY,
         timeoutMs: this.config.e2b?.timeoutMs || appConfig.e2b.timeoutMs
       });
-      
+
       const sandboxId = (this.sandbox as any).sandboxId || Date.now().toString();
       const host = (this.sandbox as any).getHost(appConfig.e2b.vitePort);
-      
+
 
       this.sandboxInfo = {
         sandboxId,
@@ -75,7 +75,7 @@ export class E2BProvider extends SandboxProvider {
       throw new Error('No active sandbox');
     }
 
-    
+
     const result = await this.sandbox.runCode(`
       import subprocess
       import os
@@ -93,10 +93,10 @@ export class E2BProvider extends SandboxProvider {
           print(result.stderr)
       print(f"\\nReturn code: {result.returncode}")
     `);
-    
+
     const output = result.logs.stdout.join('\n');
     const stderr = result.logs.stderr.join('\n');
-    
+
     return {
       stdout: output,
       stderr,
@@ -111,7 +111,7 @@ export class E2BProvider extends SandboxProvider {
     }
 
     const fullPath = path.startsWith('/') ? path : `/home/user/app/${path}`;
-    
+
     // Use the E2B filesystem API to write the file
     // Note: E2B SDK uses files.write() method
     if ((this.sandbox as any).files && typeof (this.sandbox as any).files.write === 'function') {
@@ -132,7 +132,7 @@ export class E2BProvider extends SandboxProvider {
         print(f"✓ Written: ${fullPath}")
       `);
     }
-    
+
     this.existingFiles.add(path);
   }
 
@@ -142,13 +142,13 @@ export class E2BProvider extends SandboxProvider {
     }
 
     const fullPath = path.startsWith('/') ? path : `/home/user/app/${path}`;
-    
+
     const result = await this.sandbox.runCode(`
       with open("${fullPath}", 'r') as f:
           content = f.read()
       print(content)
     `);
-    
+
     return result.logs.stdout.join('\n');
   }
 
@@ -174,7 +174,7 @@ export class E2BProvider extends SandboxProvider {
       files = list_files("${directory}")
       print(json.dumps(files))
     `);
-    
+
     try {
       return JSON.parse(result.logs.stdout.join(''));
     } catch {
@@ -189,8 +189,8 @@ export class E2BProvider extends SandboxProvider {
 
     const packageList = packages.join(' ');
     const flags = appConfig.packages.useLegacyPeerDeps ? '--legacy-peer-deps' : '';
-    
-    
+
+
     const result = await this.sandbox.runCode(`
       import subprocess
       import os
@@ -211,15 +211,15 @@ export class E2BProvider extends SandboxProvider {
           print(result.stderr)
       print(f"\\nReturn code: {result.returncode}")
     `);
-    
+
     const output = result.logs.stdout.join('\n');
     const stderr = result.logs.stderr.join('\n');
-    
+
     // Restart Vite if configured
     if (appConfig.packages.autoRestartVite && !result.error) {
       await this.restartViteServer();
     }
-    
+
     return {
       stdout: output,
       stderr,
@@ -233,7 +233,7 @@ export class E2BProvider extends SandboxProvider {
       throw new Error('No active sandbox');
     }
 
-    
+
     // Write all files in a single Python script
     const setupScript = `
 import os
@@ -356,13 +356,7 @@ print('✓ src/main.jsx')
 # App.jsx
 app_jsx = """function App() {
   return (
-    <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
-      <div className="text-center max-w-2xl">
-        <p className="text-lg text-gray-400">
-          Sandbox Ready<br/>
-          Start building your React app with Vite and Tailwind CSS!
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#020405] text-white flex items-center justify-center p-4">
     </div>
   )
 }
@@ -391,7 +385,7 @@ print('\\nAll files created successfully!')
 `;
 
     await this.sandbox.runCode(setupScript);
-    
+
     // Install dependencies
     await this.sandbox.runCode(`
 import subprocess
@@ -409,7 +403,7 @@ if result.returncode == 0:
 else:
     print(f'⚠ Warning: npm install had issues: {result.stderr}')
     `);
-    
+
     // Start Vite dev server
     await this.sandbox.runCode(`
 import subprocess
@@ -436,10 +430,10 @@ process = subprocess.Popen(
 print(f'✓ Vite dev server started with PID: {process.pid}')
 print('Waiting for server to be ready...')
     `);
-    
+
     // Wait for Vite to be ready
     await new Promise(resolve => setTimeout(resolve, appConfig.e2b.viteStartupDelay));
-    
+
     // Track initial files
     this.existingFiles.add('src/App.jsx');
     this.existingFiles.add('src/main.jsx');
@@ -456,7 +450,7 @@ print('Waiting for server to be ready...')
       throw new Error('No active sandbox');
     }
 
-    
+
     await this.sandbox.runCode(`
 import subprocess
 import time
@@ -481,7 +475,7 @@ process = subprocess.Popen(
 
 print(f'✓ Vite restarted with PID: {process.pid}')
     `);
-    
+
     // Wait for Vite to be ready
     await new Promise(resolve => setTimeout(resolve, appConfig.e2b.viteStartupDelay));
   }

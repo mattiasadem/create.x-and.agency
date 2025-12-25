@@ -16,6 +16,7 @@ import {
   FiChevronRight,
   FiChevronDown,
   FiGithub,
+  FiX,
   BsFolderFill,
   BsFolder2Open,
   SiJavascript,
@@ -26,6 +27,7 @@ import {
 import CircuitBackground from '@/components/app/(home)/sections/hero/CircuitBackground';
 import { motion } from 'framer-motion';
 import CodeApplicationProgress, { type CodeApplicationState } from '@/components/CodeApplicationProgress';
+import LoadingCard from './LoadingCard';
 
 interface SandboxData {
   sandboxId: string;
@@ -449,6 +451,8 @@ function AISandboxPage() {
       return;
     }
 
+    addChatMessage('Installing dependencies...', 'system');
+
     try {
       const response = await fetch('/api/install-packages', {
         method: 'POST',
@@ -563,6 +567,7 @@ function AISandboxPage() {
     setLoading(true);
     setShowLoadingBackground(true);
     updateStatus('Creating sandbox...', false);
+    addChatMessage('Initializing secure sandbox environment...', 'system');
     setResponseArea([]);
     setScreenshotError(null);
 
@@ -649,6 +654,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
   const applyGeneratedCode = async (code: string, isEdit: boolean = false, overrideSandboxData?: SandboxData) => {
     setLoading(true);
     log('Applying AI-generated code...');
+    addChatMessage('Applying changes to sandbox...', 'system');
 
     try {
       // Show progress component instead of individual messages
@@ -1183,20 +1189,20 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                 <div className="text-sm">
                   {/* Root app folder */}
                   <div
-                    className="flex items-center gap-2 py-0.5 px-3 hover:bg-gray-100 rounded cursor-pointer text-gray-700"
+                    className="flex items-center gap-2 py-0.5 px-3 hover:bg-white/5 rounded cursor-pointer text-gray-400 hover:text-white transition-colors"
                     onClick={() => toggleFolder('app')}
                   >
                     {expandedFolders.has('app') ? (
-                      <FiChevronDown style={{ width: '16px', height: '16px' }} className="text-gray-600" />
+                      <FiChevronDown style={{ width: '16px', height: '16px' }} />
                     ) : (
-                      <FiChevronRight style={{ width: '16px', height: '16px' }} className="text-gray-600" />
+                      <FiChevronRight style={{ width: '16px', height: '16px' }} />
                     )}
                     {expandedFolders.has('app') ? (
-                      <BsFolder2Open style={{ width: '16px', height: '16px' }} className="text-blue-500" />
+                      <BsFolder2Open style={{ width: '16px', height: '16px' }} className="text-cyan-500" />
                     ) : (
-                      <BsFolderFill style={{ width: '16px', height: '16px' }} className="text-blue-500" />
+                      <BsFolderFill style={{ width: '16px', height: '16px' }} className="text-cyan-500" />
                     )}
-                    <span className="font-medium text-gray-800">app</span>
+                    <span className="font-medium">app</span>
                   </div>
 
                   {expandedFolders.has('app') && (
@@ -1204,13 +1210,6 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                       {/* Group files by directory */}
                       {(() => {
                         const fileTree: { [key: string]: Array<{ name: string; edited?: boolean }> } = {};
-
-                        // Create a map of edited files
-                        // const editedFiles = new Set(
-                        //   generationProgress.files
-                        //     .filter(f => f.edited)
-                        //     .map(f => f.path)
-                        // );
 
                         // Process all files from generation progress
                         generationProgress.files.forEach(file => {
@@ -1229,20 +1228,20 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                           <div key={dir} className="mb-1">
                             {dir && (
                               <div
-                                className="flex items-center gap-2 py-0.5 px-3 hover:bg-gray-100 rounded cursor-pointer text-gray-700"
+                                className="flex items-center gap-2 py-0.5 px-3 hover:bg-white/5 rounded cursor-pointer text-gray-400 hover:text-white transition-colors"
                                 onClick={() => toggleFolder(dir)}
                               >
                                 {expandedFolders.has(dir) ? (
-                                  <FiChevronDown style={{ width: '16px', height: '16px' }} className="text-gray-600" />
+                                  <FiChevronDown style={{ width: '16px', height: '16px' }} />
                                 ) : (
-                                  <FiChevronRight style={{ width: '16px', height: '16px' }} className="text-gray-600" />
+                                  <FiChevronRight style={{ width: '16px', height: '16px' }} />
                                 )}
                                 {expandedFolders.has(dir) ? (
                                   <BsFolder2Open style={{ width: '16px', height: '16px' }} className="text-yellow-600" />
                                 ) : (
                                   <BsFolderFill style={{ width: '16px', height: '16px' }} className="text-yellow-600" />
                                 )}
-                                <span className="text-gray-700">{dir.split('/').pop()}</span>
+                                <span className="">{dir.split('/').pop()}</span>
                               </div>
                             )}
                             {(!dir || expandedFolders.has(dir)) && (
@@ -1255,8 +1254,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                                     <div
                                       key={fullPath}
                                       className={`flex items-center gap-2 py-0.5 px-3 rounded cursor-pointer transition-all ${isSelected
-                                        ? 'bg-blue-500 text-white'
-                                        : 'text-gray-700 hover:bg-gray-100'
+                                        ? 'bg-cyan-500/20 text-cyan-300'
+                                        : 'text-gray-400 hover:bg-white/5 hover:text-white'
                                         }`}
                                       onClick={() => handleFileClick(fullPath)}
                                     >
@@ -1264,7 +1263,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                                       <span className={`text-xs flex items-center gap-1 ${isSelected ? 'font-medium' : ''}`}>
                                         {fileInfo.name}
                                         {fileInfo.edited && (
-                                          <span className={`text-[10px] px-1 rounded ${isSelected ? 'bg-blue-400' : 'bg-orange-500 text-white'
+                                          <span className={`text-[10px] px-1 rounded ${isSelected ? 'bg-cyan-500/30' : 'bg-orange-500/80 text-white'
                                             }`}>✓</span>
                                         )}
                                       </span>
@@ -1284,28 +1283,28 @@ Tip: I automatically detect and install npm packages from your code imports (lik
           )}
 
           {/* Code Content */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Thinking Mode Display - Only show during active generation */}
+          <div className="flex-1 flex flex-col overflow-hidden bg-[#0a0f14]">
+            {/* Thinking Mode Display */}
             {generationProgress.isGenerating && (generationProgress.isThinking || generationProgress.thinkingText) && (
-              <div className="px-6 pb-6">
+              <div className="px-6 pb-6 pt-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <div className="text-purple-600 font-medium flex items-center gap-2">
+                  <div className="text-cyan-400 font-medium flex items-center gap-2">
                     {generationProgress.isThinking ? (
                       <>
-                        <div className="w-3 h-3 bg-purple-600 rounded-full animate-pulse" />
-                        AI is thinking...
+                        <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.5)]" />
+                        <span className="font-mono text-sm tracking-wide">ANALYZING REQUEST...</span>
                       </>
                     ) : (
                       <>
-                        <span className="text-purple-600">✓</span>
-                        Thought for {generationProgress.thinkingDuration || 0} seconds
+                        <span className="text-green-400">✓</span>
+                        <span className="font-mono text-sm text-gray-400">Analysis complete ({generationProgress.thinkingDuration || 0}s)</span>
                       </>
                     )}
                   </div>
                 </div>
                 {generationProgress.thinkingText && (
-                  <div className="bg-purple-950 border border-purple-700 rounded-lg p-4 max-h-48 overflow-y-auto scrollbar-hide">
-                    <pre className="text-xs font-mono text-purple-300 whitespace-pre-wrap">
+                  <div className="bg-black/40 border border-cyan-900/30 rounded-lg p-4 max-h-48 overflow-y-auto scrollbar-hide font-mono text-xs">
+                    <pre className="text-cyan-200/70 whitespace-pre-wrap leading-relaxed">
                       {generationProgress.thinkingText}
                     </pre>
                   </div>
@@ -1319,22 +1318,20 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                 {/* Show selected file if one is selected */}
                 {selectedFile ? (
                   <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="bg-black/50 border border-white/10 rounded-lg overflow-hidden shadow-sm">
-                      <div className="px-4 py-2 bg-[#1a1f24] text-gray-200 flex items-center justify-between">
+                    <div className="bg-[#05070a] border border-white/10 rounded-lg overflow-hidden shadow-2xl">
+                      <div className="px-4 py-2 bg-white/5 text-gray-200 flex items-center justify-between border-b border-white/5">
                         <div className="flex items-center gap-2">
                           {getFileIcon(selectedFile)}
-                          <span className="font-mono text-sm">{selectedFile}</span>
+                          <span className="font-mono text-sm text-gray-300">{selectedFile}</span>
                         </div>
                         <button
                           onClick={() => setSelectedFile(null)}
-                          className="hover:bg-black/20 p-1 rounded transition-colors"
+                          className="hover:bg-white/10 p-1 rounded transition-colors"
                         >
-                          <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
+                          <FiX className="w-4 h-4 text-gray-500 hover:text-white" />
                         </button>
                       </div>
-                      <div className="bg-gray-900 border border-gray-700 rounded">
+                      <div className="bg-[#05070a]">
                         <SyntaxHighlighter
                           language={(() => {
                             const ext = selectedFile.split('.').pop()?.toLowerCase();
@@ -1364,28 +1361,31 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                 ) : /* If no files parsed yet, show loading or raw stream */
                   generationProgress.files.length === 0 && !generationProgress.currentFile ? (
                     generationProgress.isThinking ? (
-                      // Beautiful loading state while thinking
+                      // Thinking state
                       <div className="flex items-center justify-center h-full">
-                        <div className="text-center">
-                          <div className="mb-8 relative">
-                            <div className="w-48 h-48 mx-auto">
-                              <div className="absolute inset-0 border-8 border-gray-800 rounded-full"></div>
-                              <div className="absolute inset-0 border-8 border-green-500 rounded-full animate-spin border-t-transparent"></div>
+                        <div className="text-center relative z-10">
+                          <div className="mb-8 relative w-32 h-32 mx-auto">
+                            <div className="absolute inset-0 border-2 border-cyan-900/30 rounded-full"></div>
+                            <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_15px_rgba(6,182,212,0.3)]"></div>
+                            <div className="absolute inset-4 border-2 border-purple-500 rounded-full animate-spin-slow border-b-transparent opacity-50"></div>
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-16 h-16 bg-cyan-500/10 rounded-full animate-pulse blur-xl"></div>
                             </div>
                           </div>
-                          <h3 className="text-xl font-medium text-white mb-2">AI is analyzing your request</h3>
-                          <p className="text-gray-400 text-sm">{generationProgress.status || 'Preparing to generate code...'}</p>
+                          <h3 className="text-xl font-display font-medium text-white mb-2 tracking-wide">AI IS THINKING</h3>
+                          <p className="text-cyan-400/60 font-mono text-sm">{generationProgress.status || 'Initializing neural network...'}</p>
                         </div>
                       </div>
                     ) : (
+                      // Streaming start state
                       <div className="bg-black/50 border border-white/10 rounded-lg overflow-hidden">
-                        <div className="px-4 py-2 bg-white/5 text-gray-200 flex items-center justify-between">
+                        <div className="px-4 py-2 bg-white/5 text-gray-200 flex items-center justify-between border-b border-white/5">
                           <div className="flex items-center gap-2">
-                            <div className="w-16 h-16 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
-                            <span className="font-mono text-sm">Streaming code...</span>
+                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,197,94,0.5)]" />
+                            <span className="font-mono text-sm text-green-400">ESTABLISHING STREAM...</span>
                           </div>
                         </div>
-                        <div className="p-4 bg-gray-900 rounded">
+                        <div className="p-4 bg-[#05070a] min-h-[100px]">
                           <SyntaxHighlighter
                             language="jsx"
                             style={vscDarkPlus}
@@ -1397,9 +1397,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                             }}
                             showLineNumbers={true}
                           >
-                            {generationProgress.streamedCode || 'Starting code generation...'}
+                            {generationProgress.streamedCode || '// Initializing interface...'}
                           </SyntaxHighlighter>
-                          <span className="inline-block w-3 h-5 bg-orange-400 ml-1 animate-pulse" />
                         </div>
                       </div>
                     )
@@ -1407,21 +1406,22 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                     <div className="space-y-4">
                       {/* Show current file being generated */}
                       {generationProgress.currentFile && (
-                        <div className="bg-black border-2 border-gray-400 rounded-lg overflow-hidden shadow-sm">
-                          <div className="px-4 py-2 bg-[#36322F] text-white flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div className="w-16 h-16 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                              <span className="font-mono text-sm">{generationProgress.currentFile.path}</span>
-                              <span className={`px-2 py-0.5 text-xs rounded ${generationProgress.currentFile.type === 'css' ? 'bg-blue-600 text-white' :
-                                generationProgress.currentFile.type === 'javascript' ? 'bg-yellow-600 text-white' :
-                                  generationProgress.currentFile.type === 'json' ? 'bg-green-600 text-white' :
-                                    'bg-gray-200 text-gray-700'
+                        <div className="bg-[#05070a]/80 backdrop-blur-sm border border-cyan-500/30 rounded-lg overflow-hidden shadow-[0_0_20px_rgba(6,182,212,0.1)]">
+                          <div className="px-4 py-2 bg-gradient-to-r from-cyan-950/30 to-transparent text-white flex items-center justify-between border-b border-cyan-500/20">
+                            <div className="flex items-center gap-3">
+                              <div className="w-4 h-4 border-2 border-cyan-400 border-t-transparent rounded-full animate-spin" />
+                              <span className="font-mono text-sm text-cyan-100">{generationProgress.currentFile.path}</span>
+                              <span className={`px-2 py-0.5 text-[10px] font-mono rounded border ${generationProgress.currentFile.type === 'css' ? 'bg-blue-500/10 border-blue-500/30 text-blue-300' :
+                                generationProgress.currentFile.type === 'javascript' ? 'bg-yellow-500/10 border-yellow-500/30 text-yellow-300' :
+                                  generationProgress.currentFile.type === 'json' ? 'bg-green-500/10 border-green-500/30 text-green-300' :
+                                    'bg-gray-500/10 border-gray-500/30 text-gray-300'
                                 }`}>
                                 {generationProgress.currentFile.type === 'javascript' ? 'JSX' : generationProgress.currentFile.type.toUpperCase()}
                               </span>
                             </div>
+                            <span className="text-xs font-mono text-cyan-500/70 animate-pulse">GENERATING</span>
                           </div>
-                          <div className="bg-gray-900 border border-gray-700 rounded">
+                          <div className="bg-[#05070a]">
                             <SyntaxHighlighter
                               language={
                                 generationProgress.currentFile.type === 'css' ? 'css' :
@@ -1440,28 +1440,29 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                             >
                               {generationProgress.currentFile.content}
                             </SyntaxHighlighter>
-                            <span className="inline-block w-3 h-4 bg-orange-400 ml-4 mb-4 animate-pulse" />
+                            <span className="inline-block w-2 h-4 bg-cyan-500 ml-4 mb-4 animate-pulse shadow-[0_0_8px_rgba(6,182,212,0.8)]" />
                           </div>
                         </div>
                       )}
 
                       {/* Show completed files */}
-                      {generationProgress.files.map((file, idx) => (
-                        <div key={idx} className="bg-white border border-gray-200 rounded-lg overflow-hidden">
-                          <div className="px-4 py-2 bg-[#36322F] text-white flex items-center justify-between">
+                      {generationProgress.files.slice().reverse().map((file, idx) => (
+                        <div key={idx} className="bg-[#05070a] border border-white/5 rounded-lg overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
+                          <div className="px-4 py-2 bg-white/5 text-white flex items-center justify-between border-b border-white/5">
                             <div className="flex items-center gap-2">
-                              <span className="text-green-500">✓</span>
-                              <span className="font-mono text-sm">{file.path}</span>
+                              <span className="text-green-400">✓</span>
+                              <span className="font-mono text-sm text-gray-300">{file.path}</span>
                             </div>
-                            <span className={`px-2 py-0.5 text-xs rounded ${file.type === 'css' ? 'bg-blue-600 text-white' :
-                              file.type === 'javascript' ? 'bg-yellow-600 text-white' :
-                                file.type === 'json' ? 'bg-green-600 text-white' :
-                                  'bg-gray-200 text-gray-700'
+                            <span className={`px-2 py-0.5 text-[10px] rounded ${file.type === 'css' ? 'bg-blue-500/20 text-blue-300' :
+                              file.type === 'javascript' ? 'bg-yellow-500/20 text-yellow-300' :
+                                file.type === 'json' ? 'bg-green-500/20 text-green-300' :
+                                  'bg-gray-500/20 text-gray-300'
                               }`}>
                               {file.type === 'javascript' ? 'JSX' : file.type.toUpperCase()}
                             </span>
                           </div>
-                          <div className="bg-gray-900 border border-gray-700  max-h-48 overflow-y-auto scrollbar-hide">
+                          <div className="bg-[#05070a] max-h-32 overflow-hidden relative">
+                            <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#05070a] to-transparent z-10" />
                             <SyntaxHighlighter
                               language={
                                 file.type === 'css' ? 'css' :
@@ -1484,46 +1485,6 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                           </div>
                         </div>
                       ))}
-
-                      {/* Show remaining raw stream if there's content after the last file */}
-                      {!generationProgress.currentFile && generationProgress.streamedCode.length > 0 && (
-                        <div className="bg-black border border-gray-200 rounded-lg overflow-hidden">
-                          <div className="px-4 py-2 bg-[#36322F] text-white flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <div className="w-16 h-16 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                              <span className="font-mono text-sm">Processing...</span>
-                            </div>
-                          </div>
-                          <div className="bg-gray-900 border border-gray-700 rounded">
-                            <SyntaxHighlighter
-                              language="jsx"
-                              style={vscDarkPlus}
-                              customStyle={{
-                                margin: 0,
-                                padding: '1rem',
-                                fontSize: '0.75rem',
-                                background: 'transparent',
-                              }}
-                              showLineNumbers={false}
-                            >
-                              {(() => {
-                                // Show only the tail of the stream after the last file
-                                const lastFileEnd = generationProgress.files.length > 0
-                                  ? generationProgress.streamedCode.lastIndexOf('</file>') + 7
-                                  : 0;
-                                let remainingContent = generationProgress.streamedCode.slice(lastFileEnd).trim();
-
-                                // Remove explanation tags and content
-                                remainingContent = remainingContent.replace(/<explanation>[\s\S]*?<\/explanation>/g, '').trim();
-
-                                // If only whitespace or nothing left, show loading message
-                                // Use "Loading sandbox..." instead of "Waiting for next file..." for better UX
-                                return remainingContent || 'Loading sandbox...';
-                              })()}
-                            </SyntaxHighlighter>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   )}
               </div>
@@ -1532,9 +1493,13 @@ Tip: I automatically detect and install npm packages from your code imports (lik
             {/* Progress indicator */}
             {generationProgress.components.length > 0 && (
               <div className="mx-6 mb-6">
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div className="flex justify-between text-xs font-mono text-gray-500 mb-1">
+                  <span>PROGRESS</span>
+                  <span>{Math.round((generationProgress.currentComponent / Math.max(generationProgress.components.length, 1)) * 100)}%</span>
+                </div>
+                <div className="h-1 bg-white/10 rounded-full overflow-hidden">
                   <div
-                    className="h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all duration-300"
+                    className="h-full bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.5)] transition-all duration-300"
                     style={{
                       width: `${(generationProgress.currentComponent / Math.max(generationProgress.components.length, 1)) * 100}%`
                     }}
@@ -1554,53 +1519,56 @@ Tip: I automatically detect and install npm packages from your code imports (lik
 
       if (isInitialGeneration || isNewGenerationWithSandbox) {
         return (
-          <div className="relative w-full h-full bg-gray-900">
-            {/* Screenshot as background when available */}
+          <div className="relative w-full h-full bg-[#020405] overflow-hidden">
+            <CircuitBackground />
+
+            {/* Screenshot as background when available - dimmed */}
             {urlScreenshot && (
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={urlScreenshot}
                 alt="Website preview"
-                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700"
-                style={{
-                  opacity: isScreenshotLoaded ? 1 : 0,
-                  willChange: 'opacity'
-                }}
+                className="absolute inset-0 w-full h-full object-cover transition-opacity duration-700 opacity-20 blur-sm mix-blend-overlay"
                 onLoad={() => setIsScreenshotLoaded(true)}
-                loading="eager"
               />
             )}
 
-            {/* Loading overlay - only show when actively processing initial generation */}
+            {/* Interactive Loading Overlay */}
             {shouldShowLoadingOverlay && (
-              <div className="absolute inset-0 bg-black/70 flex flex-col items-center justify-center backdrop-blur-sm">
-                {/* Loading animation with skeleton */}
-                <div className="text-center max-w-md">
-                  {/* Animated skeleton lines */}
-                  <div className="mb-6 space-y-3">
-                    <div className="h-2 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded animate-pulse"
-                      style={{ animationDuration: '1.5s', animationDelay: '0s' }} />
-                    <div className="h-2 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded animate-pulse w-4/5 mx-auto"
-                      style={{ animationDuration: '1.5s', animationDelay: '0.2s' }} />
-                    <div className="h-2 bg-gradient-to-r from-transparent via-white/20 to-transparent rounded animate-pulse w-3/5 mx-auto"
-                      style={{ animationDuration: '1.5s', animationDelay: '0.4s' }} />
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
+                <div className="relative w-full max-w-lg px-8 py-20">
+                  {/* Decorative corner brackets */}
+                  <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-cyan-500/30 rounded-tl-lg" />
+                  <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-cyan-500/30 rounded-tr-lg" />
+                  <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-cyan-500/30 rounded-bl-lg" />
+                  <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-cyan-500/30 rounded-br-lg" />
+
+                  {/* Central animated loader */}
+                  <div className="flex flex-col items-center justify-center relative">
+                    <div className="w-16 h-16 relative mb-8">
+                      <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
+                      <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                    </div>
+
+                    {/* Status Text with Glitch Effect */}
+                    <div className="text-center space-y-4 relative z-10">
+                      <h3 className="text-3xl font-display font-bold text-white tracking-wide">
+                        {isCapturingScreenshot ? 'ANALYZING TARGET' :
+                          isPreparingDesign ? 'DECODING DESIGN SYSTEM' :
+                            generationProgress.isGenerating ? 'ASSEMBLING INTERFACE' :
+                              'INITIALIZING'}
+                      </h3>
+
+                      <div className="h-px w-32 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent mx-auto" />
+
+                      <p className="font-mono text-cyan-400/70 text-sm tracking-wider uppercase">
+                        {isCapturingScreenshot ? 'Extracting visual data points...' :
+                          isPreparingDesign ? 'Parsing layout structure...' :
+                            generationProgress.isGenerating ? 'Compiling React components...' :
+                              'Stand by...'}
+                      </p>
+                    </div>
                   </div>
-
-                  {/* Status text */}
-                  <p className="text-white text-lg font-medium">
-                    {isCapturingScreenshot ? 'Analyzing website...' :
-                      isPreparingDesign ? 'Preparing design...' :
-                        generationProgress.isGenerating ? 'Generating code...' :
-                          'Loading...'}
-                  </p>
-
-                  {/* Subtle progress hint */}
-                  <p className="text-white/60 text-sm mt-2">
-                    {isCapturingScreenshot ? 'Taking a screenshot of the site' :
-                      isPreparingDesign ? 'Understanding the layout and structure' :
-                        generationProgress.isGenerating ? 'Writing React components' :
-                          'Please wait...'}
-                  </p>
                 </div>
               </div>
             )}
@@ -1611,7 +1579,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
       // Show sandbox iframe - keep showing during edits, only hide during initial loading
       if (sandboxData?.url) {
         return (
-          <div className="relative w-full h-full">
+          <div className="relative w-full h-full bg-[#0a0f14]">
             <iframe
               ref={iframeRef}
               src={sandboxData.url}
@@ -1621,73 +1589,80 @@ Tip: I automatically detect and install npm packages from your code imports (lik
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
             />
 
-            {/* Package installation overlay - shows when installing packages or applying code */}
+            {/* Interactive Package Installation & Application Overlay */}
             {codeApplicationState.stage && codeApplicationState.stage !== 'complete' && (
-              <div className="absolute inset-0 bg-white/95 backdrop-blur-sm flex items-center justify-center z-10">
-                <div className="text-center max-w-md">
-                  <div className="mb-6">
-                    {/* Animated icon based on stage */}
-                    {codeApplicationState.stage === 'installing' ? (
-                      <div className="w-16 h-16 mx-auto">
-                        <svg className="w-full h-full animate-spin" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                      </div>
-                    ) : null}
+              <LoadingCard key="package-install">
+                <div className="flex items-start gap-6">
+                  {/* Animated Terminal Icon */}
+                  <div className="w-16 h-16 rounded-xl bg-black border border-white/10 flex items-center justify-center flex-shrink-0 relative">
+                    <div className="absolute inset-0 border-2 border-gray-800 rounded-xl" />
+                    <div className="absolute inset-0 border-2 border-cyan-500 rounded-xl animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
                   </div>
 
-                  <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    {codeApplicationState.stage === 'analyzing' && 'Analyzing code...'}
-                    {codeApplicationState.stage === 'installing' && 'Installing packages...'}
-                    {codeApplicationState.stage === 'applying' && 'Applying changes...'}
-                  </h3>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-xl font-display font-medium text-white mb-1">
+                      {codeApplicationState.stage === 'analyzing' && 'System Analysis'}
+                      {codeApplicationState.stage === 'installing' && 'Installing Dependencies'}
+                      {codeApplicationState.stage === 'applying' && 'Writing File System'}
+                    </h3>
+                    <p className="text-gray-400 text-sm mb-6">
+                      {codeApplicationState.stage === 'analyzing' && 'Resolving dependency graph...'}
+                      {codeApplicationState.stage === 'installing' && 'Fetching packages from registry...'}
+                      {codeApplicationState.stage === 'applying' && 'Injecting generated code...'}
+                    </p>
 
-                  {/* Package list during installation */}
-                  {codeApplicationState.stage === 'installing' && codeApplicationState.packages && (
-                    <div className="mb-4">
-                      <div className="flex flex-wrap gap-2 justify-center">
-                        {codeApplicationState.packages.map((pkg, index) => (
-                          <span
-                            key={index}
-                            className={`px-2 py-1 text-xs rounded-full transition-all ${codeApplicationState.installedPackages?.includes(pkg)
-                              ? 'bg-green-100 text-green-700'
-                              : 'bg-gray-100 text-gray-600'
-                              }`}
-                          >
-                            {pkg}
-                            {codeApplicationState.installedPackages?.includes(pkg) && (
-                              <span className="ml-1">✓</span>
-                            )}
-                          </span>
-                        ))}
+                    {/* Terminal-style package list */}
+                    {codeApplicationState.stage === 'installing' && codeApplicationState.packages && (
+                      <div className="bg-black/80 rounded-lg p-4 font-mono text-xs border border-white/5 max-h-40 overflow-y-auto scrollbar-hide">
+                        <div className="flex flex-col gap-1">
+                          {codeApplicationState.packages.map((pkg, index) => (
+                            <div key={index} className="flex items-center gap-2">
+                              <span className={codeApplicationState.installedPackages?.includes(pkg) ? "text-green-500" : "text-gray-600"}>
+                                {codeApplicationState.installedPackages?.includes(pkg) ? "✓" : "→"}
+                              </span>
+                              <span className={codeApplicationState.installedPackages?.includes(pkg) ? "text-gray-300" : "text-gray-500"}>
+                                {pkg}
+                              </span>
+                              {codeApplicationState.installedPackages?.includes(pkg) && (
+                                <span className="text-gray-600 ml-auto">{Math.floor(Math.random() * 500) + 10}ms</span>
+                              )}
+                            </div>
+                          ))}
+                          <div className="animate-pulse text-cyan-500 mt-1">_</div>
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    )}
 
-                  {/* Files being generated */}
-                  {codeApplicationState.stage === 'applying' && codeApplicationState.filesGenerated && (
-                    <div className="text-sm text-gray-600">
-                      Creating {codeApplicationState.filesGenerated.length} files...
-                    </div>
-                  )}
-
-                  <p className="text-sm text-gray-500 mt-2">
-                    {codeApplicationState.stage === 'analyzing' && 'Parsing generated code and detecting dependencies...'}
-                    {codeApplicationState.stage === 'installing' && 'This may take a moment while npm installs the required packages...'}
-                    {codeApplicationState.stage === 'applying' && 'Writing files to your sandbox environment...'}
-                  </p>
+                    {/* File injection progress */}
+                    {codeApplicationState.stage === 'applying' && codeApplicationState.filesGenerated && (
+                      <div className="bg-black/80 rounded-lg p-4 font-mono text-xs border border-white/5">
+                        <div className="flex justify-between text-gray-400 mb-2">
+                          <span>Injecting files</span>
+                          <span>{codeApplicationState.filesGenerated.length} items</span>
+                        </div>
+                        <div className="h-1 bg-gray-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-green-500 animate-progressBar" style={{ width: '100%' }} />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
+              </LoadingCard>
             )}
 
-            {/* Show a subtle indicator when code is being edited/generated */}
-            {generationProgress.isGenerating && generationProgress.isEdit && !codeApplicationState.stage && (
-              <div className="absolute top-4 right-4 inline-flex items-center gap-2 px-3 py-1.5 bg-black/80 backdrop-blur-sm rounded-lg">
-                <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-white text-xs font-medium">Generating code...</span>
-              </div>
-            )}
+
+            {/* Subtle "Generating" Indicator */}
+            {
+              generationProgress.isGenerating && generationProgress.isEdit && !codeApplicationState.stage && (
+                <div className="absolute top-4 right-4 inline-flex items-center gap-3 px-4 py-2 bg-[#0a0f14]/90 backdrop-blur-md rounded-full border border-cyan-500/20 shadow-lg">
+                  <div className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-cyan-500"></span>
+                  </div>
+                  <span className="text-cyan-100 text-xs font-mono tracking-wide">GENERATING UPDATE</span>
+                </div>
+              )
+            }
 
             {/* Refresh button */}
             <button
@@ -1698,35 +1673,57 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                   iframeRef.current.src = newSrc;
                 }
               }}
-              className="absolute bottom-4 right-4 bg-white/90 hover:bg-white text-gray-700 p-2 rounded-lg shadow-lg transition-all duration-200 hover:scale-105"
+              className="absolute bottom-4 right-4 bg-black/80 hover:bg-black text-white p-2.5 rounded-lg border border-white/10 shadow-lg transition-all duration-200 hover:scale-105 hover:border-white/30 backdrop-blur-sm group"
               title="Refresh sandbox"
             >
-              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg width="18" height="18" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="group-hover:rotate-180 transition-transform duration-500">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
               </svg>
             </button>
-          </div>
+          </div >
         );
       }
 
       // Default state when no sandbox and no screenshot
       return (
-        <div className="flex items-center justify-center h-full bg-gray-50 text-gray-600 text-lg">
-          {screenshotError ? (
-            <div className="text-center">
-              <p className="mb-2">Failed to capture screenshot</p>
-              <p className="text-sm text-gray-500">{screenshotError}</p>
-            </div>
-          ) : sandboxData ? (
-            <div className="text-gray-500">
-              <div className="w-16 h-16 border-2 border-gray-300 border-t-transparent rounded-full animate-spin mx-auto mb-2" />
-              <p className="text-sm">Loading preview...</p>
-            </div>
-          ) : (
-            <div className="text-gray-500 text-center">
-              <p className="text-sm">Start chatting to create your first app</p>
-            </div>
-          )}
+        <div className="flex flex-col items-center justify-center h-full bg-[#020405] text-white relative overflow-hidden">
+          <CircuitBackground />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+
+          <div className="relative z-10 w-full h-full flex items-center justify-center px-6">
+            {screenshotError ? (
+              <div className="w-full max-w-lg px-8 py-20 border border-red-500/30 rounded-xl bg-red-950/20 shadow-2xl relative overflow-hidden backdrop-blur-md">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50" />
+                <h3 className="text-xl font-display font-medium text-white mb-2 text-center">Detailed Analysis Failed</h3>
+                <p className="text-sm text-red-300/80 leading-relaxed mb-4 text-center">{screenshotError}</p>
+                <div className="text-xs text-gray-500 font-mono text-center">Systems initialized in fallback mode</div>
+              </div>
+            ) : sandboxData ? (
+              <div className="w-full max-w-lg px-8 py-20 border border-white/10 rounded-xl bg-black/50 shadow-2xl relative overflow-hidden backdrop-blur-md">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50" />
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 relative mb-6">
+                    <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
+                    <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                  </div>
+                  <h3 className="text-lg font-display font-medium text-white mb-1">CONNECTING TO SANDBOX</h3>
+                  <p className="text-gray-500 text-sm font-mono">Establishing secure preview channel...</p>
+                </div>
+              </div>
+            ) : (
+              <LoadingCard>
+                <div className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
+                  <h2 className="text-3xl font-display font-bold text-white mb-4 tracking-tight">
+                    Ready to Create
+                  </h2>
+                  <div className="h-px w-16 bg-gradient-to-r from-transparent via-gray-700 to-transparent mb-4" />
+                  <p className="text-gray-400 font-light text-lg mb-4 max-w-sm text-center">
+                    Describe your app in the chat to begin the generation process.
+                  </p>
+                </div>
+              </LoadingCard>
+            )}
+          </div>
         </div>
       );
     }
@@ -3305,7 +3302,7 @@ Focus on the key sections and content, making it clean and modern.`;
 
         <div className="relative z-50 bg-[#0a0f14]/80 backdrop-blur-lg h-[64px] border-b border-white/10 flex items-center justify-between shadow-sm pl-12 pr-6 header">
           <a href="https://www.x-and.agency/" className="flex items-center gap-2 cursor-pointer no-underline">
-            <span className="text-xl font-display font-normal tracking-wide text-white">create x-and</span>
+            <span className="text-xl font-display font-normal tracking-wide text-white">x-and</span>
           </a>
           <div className="flex items-center gap-2">
             {/* Model Selector - Left side */}

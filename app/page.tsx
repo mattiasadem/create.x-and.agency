@@ -247,7 +247,7 @@ export default function HomePage() {
             <div className="flex items-center justify-between h-full">
               {/* Logo */}
               <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer">
-                <span className="text-xl font-display font-normal tracking-wide text-white">create x-and</span>
+                <span className="text-xl font-display font-normal tracking-wide text-white">x-and</span>
               </div>
 
               {/* Desktop Nav */}

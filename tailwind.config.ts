@@ -184,12 +184,18 @@ const themeConfig: Config = {
             transform: "translateY(100vh)",
           },
         },
+        progressBar: {
+          "0%": { width: "0%" },
+          "50%": { width: "70%" },
+          "100%": { width: "100%" },
+        },
       },
       animation: {
         "fade-in-up": "fade-in-up 0.6s ease-out forwards",
         "pulse-slow": "pulse-slow 4s ease-in-out infinite",
         "glow-slow": "glow-slow 3s ease-in-out infinite",
         scan: "scan 4s linear infinite",
+        progressBar: "progressBar 2s ease-in-out infinite",
       },
     }
   },
