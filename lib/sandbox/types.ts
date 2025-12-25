@@ -52,6 +52,7 @@ export abstract class SandboxProvider {
   abstract terminate(): Promise<void>;
   abstract isAlive(): boolean;
   abstract getDownloadUrl(path: string): Promise<string>;
+  abstract publish(): Promise<{ url: string; inspectUrl?: string }>;
 
   // Optional methods that providers can override
   async setupViteApp(): Promise<void> {

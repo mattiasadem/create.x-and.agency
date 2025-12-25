@@ -624,6 +624,8 @@ function AISandboxPage() {
         console.log('[checkSandboxStatus] Setting sandboxData from API:', data.sandboxData);
         setSandboxData(data.sandboxData);
         updateStatus('Sandbox active', true);
+        // Fetch files to ensure UI is in sync
+        setTimeout(fetchSandboxFiles, 100);
       } else if (data.active && !data.healthy) {
         // Sandbox exists but not responding
         updateStatus('Sandbox not responding', false);
@@ -1275,7 +1277,28 @@ Tip: I automatically detect and install npm packages from your code imports (lik
   //   };
 
   const renderMainContent = () => {
-    if (activeTab === 'generation' && (generationProgress.isGenerating || generationProgress.files.length > 0)) {
+    // Check if we have files either from current generation or previously loaded from sandbox
+    const hasFiles = generationProgress.files.length > 0 || Object.keys(sandboxFiles).length > 0;
+
+    // Prepare files to display - prioritize generation progress, fallback to sandbox files
+    const filesToDisplay = generationProgress.files.length > 0
+      ? generationProgress.files
+      : Object.entries(sandboxFiles).map(([path, content]) => {
+        const ext = path.split('.').pop()?.toLowerCase() || '';
+        const type = ext === 'jsx' || ext === 'js' ? 'javascript' :
+          ext === 'css' ? 'css' :
+            ext === 'json' ? 'json' :
+              ext === 'html' ? 'html' : 'text';
+        return {
+          path,
+          content,
+          type,
+          completed: true,
+          edited: false
+        };
+      });
+
+    if (activeTab === 'generation' && (generationProgress.isGenerating || hasFiles)) {
       return (
         /* Generation Tab Content */
         <div className="absolute inset-0 flex overflow-hidden">
@@ -1316,8 +1339,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                       {(() => {
                         const fileTree: { [key: string]: Array<{ name: string; edited?: boolean }> } = {};
 
-                        // Process all files from generation progress
-                        generationProgress.files.forEach(file => {
+                        // Process all files from filesToDisplay
+                        filesToDisplay.forEach(file => {
                           const parts = file.path.split('/');
                           const dir = parts.length > 1 ? parts.slice(0, -1).join('/') : '';
                           const fileName = parts[parts.length - 1];
@@ -1456,7 +1479,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                         >
                           {(() => {
                             // Find the file content from generated files
-                            const file = generationProgress.files.find(f => f.path === selectedFile);
+                            const file = filesToDisplay.find(f => f.path === selectedFile);
                             return file?.content || '// File content will appear here';
                           })()}
                         </SyntaxHighlighter>
@@ -1464,7 +1487,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                     </div>
                   </div>
                 ) : /* If no files parsed yet, show loading or raw stream */
-                  generationProgress.files.length === 0 && !generationProgress.currentFile ? (
+                  filesToDisplay.length === 0 && !generationProgress.currentFile ? (
                     generationProgress.isThinking ? (
                       // Thinking state
                       <div className="flex items-center justify-center h-full">
@@ -1551,7 +1574,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                       )}
 
                       {/* Show completed files */}
-                      {generationProgress.files.slice().reverse().map((file, idx) => (
+                      {filesToDisplay.slice().reverse().map((file, idx) => (
                         <div key={idx} className="bg-[#05070a] border border-white/5 rounded-lg overflow-hidden opacity-80 hover:opacity-100 transition-opacity">
                           <div className="px-4 py-2 bg-white/5 text-white flex items-center justify-between border-b border-white/5">
                             <div className="flex items-center gap-2">
@@ -1686,17 +1709,18 @@ Tip: I automatically detect and install npm packages from your code imports (lik
         );
       }
 
-      // Show sandbox iframe - only if we have content to show or are actively generating
-      if (sandboxData?.url && (generationProgress.isGenerating || generationProgress.files.length > 0)) {
+      // Show sandbox iframe - always show if we have a sandbox URL
+      // This ensures we don't show the "Ready to Create" screen when a sandbox exists
+      if (sandboxData?.url) {
         return (
           <div className="relative w-full h-full bg-[#020405] overflow-hidden">
-            <CircuitBackground />
+            <CircuitBackground showVignette={false} />
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
 
             <iframe
               ref={iframeRef}
               src={sandboxData.url}
-              className={`w-full h-full border-none transition-opacity duration-1000 ${isSandboxIframeLoaded ? 'opacity-100' : 'opacity-0'}`}
+              className={`w-full h-full border-none transition-opacity duration-1000 relative z-20 ${isSandboxIframeLoaded ? 'opacity-100' : 'opacity-0'}`}
               allow="clipboard-write"
               onLoad={() => {
                 console.log('[Iframe] Sandbox preview loaded');
@@ -2386,6 +2410,43 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     } catch (error: any) {
       log(`Failed to create zip: ${error.message}`, 'error');
       addChatMessage(`Failed to create ZIP: ${error.message}`, 'system');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const publishProject = async () => {
+    if (!sandboxData) {
+      addChatMessage('Please wait for the sandbox to be created before publishing.', 'system');
+      return;
+    }
+
+    setLoading(true);
+    addChatMessage('Publishing your project to Vercel...', 'system');
+
+    try {
+      const response = await fetch('/api/deploy-vercel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sandboxId: sandboxData.sandboxId
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        addChatMessage(`Successfully published! Your site is live at: ${data.url}`, 'ai');
+        if (data.inspectUrl) {
+          addChatMessage(`You can monitor the build and deployment status here: ${data.inspectUrl}`, 'system');
+        }
+        // Open the published URL in a new tab
+        window.open(data.url, '_blank');
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      addChatMessage(`Failed to publish: ${error.message}`, 'error');
     } finally {
       setLoading(false);
     }
@@ -3544,6 +3605,22 @@ Focus on the key sections and content, making it clean and modern.`;
               <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10" />
               </svg>
+            </button>
+            <button
+              onClick={publishProject}
+              disabled={!sandboxData || loading}
+              className="p-8 rounded-lg transition-colors bg-white/5 border border-white/10 text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-50 disabled:cursor-not-allowed group relative"
+              title="Publish project to Vercel"
+            >
+              <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" className={loading ? "animate-bounce" : ""}>
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              </svg>
+              {loading && (
+                <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-blue-500"></span>
+                </span>
+              )}
             </button>
 
           </div>

@@ -632,6 +632,78 @@ body {
     return `${this.sandboxInfo.url}/${publicFileName}`;
   }
 
+  async publish(): Promise<{ url: string }> {
+    if (!this.sandbox) {
+      throw new Error('No active sandbox');
+    }
+
+    const token = this.config.vercel?.token || process.env.VERCEL_TOKEN;
+    if (!token) {
+      throw new Error('VERCEL_TOKEN not found in environment or config');
+    }
+
+    const teamId = this.config.vercel?.teamId || process.env.VERCEL_TEAM_ID;
+
+    // 1. List all files
+    const files = await this.listFiles();
+    const deploymentFiles = [];
+
+    // 2. Read all files
+    for (const filePath of files) {
+      // Skip binary, massive or irrelevant files if any, but Vite projects are usually small
+      try {
+        const content = await this.readFile(filePath);
+        deploymentFiles.push({
+          file: filePath,
+          data: content
+        });
+      } catch (e) {
+        console.warn(`[VercelProvider] Failed to read file ${filePath} for deployment, skipping:`, e);
+      }
+    }
+
+    if (deploymentFiles.length === 0) {
+      throw new Error('No files found to deploy');
+    }
+
+    // 3. Create deployment via Vercel API
+    const url = `https://api.vercel.com/v13/deployments${teamId ? `?teamId=${teamId}` : ''}`;
+
+    // Generate a unique name for the deployment
+    const projectName = `x-and-projects-${Math.random().toString(36).substring(2, 10)}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: projectName,
+        files: deploymentFiles,
+        projectSettings: {
+          framework: 'vite',
+          buildCommand: 'npm run build',
+          outputDirectory: 'dist'
+        },
+        target: 'production'
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(`Vercel deployment failed: ${errorData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+
+    // Deployment started, return the URL
+    // Note: It might take a minute to be fully functional, but we return the URL
+    return {
+      url: `https://${data.url}`
+    };
+  }
+
   isAlive(): boolean {
     return !!this.sandbox;
   }

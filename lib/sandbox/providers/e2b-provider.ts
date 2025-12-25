@@ -529,4 +529,72 @@ print(f'✓ Vite restarted with PID: {process.pid}')
 
     throw new Error('Download URL generation not supported by this sandbox version');
   }
+
+  async publish(): Promise<{ url: string }> {
+    if (!this.sandbox) {
+      throw new Error('No active sandbox');
+    }
+
+    const token = this.config.vercel?.token || process.env.VERCEL_TOKEN;
+    if (!token) {
+      throw new Error('VERCEL_TOKEN not found in environment or config');
+    }
+
+    const teamId = this.config.vercel?.teamId || process.env.VERCEL_TEAM_ID;
+
+    // 1. List all files
+    const files = await this.listFiles();
+    const deploymentFiles = [];
+
+    // 2. Read all files
+    for (const filePath of files) {
+      try {
+        const content = await this.readFile(filePath);
+        deploymentFiles.push({
+          file: filePath,
+          data: content
+        });
+      } catch (e) {
+        console.warn(`[E2BProvider] Failed to read file ${filePath} for deployment, skipping:`, e);
+      }
+    }
+
+    if (deploymentFiles.length === 0) {
+      throw new Error('No files found to deploy');
+    }
+
+    // 3. Create deployment via Vercel API
+    const url = `https://api.vercel.com/v12/deployments${teamId ? `?teamId=${teamId}` : ''}`;
+    const projectName = `x-and-projects-${Math.random().toString(36).substring(2, 10)}`;
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        name: projectName,
+        files: deploymentFiles,
+        projectSettings: {
+          framework: 'vite',
+          buildCommand: 'npm run build',
+          outputDirectory: 'dist'
+        },
+        target: 'production'
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('[E2BProvider] Vercel API Error:', errorData);
+      throw new Error(`Vercel deployment failed: ${errorData.error?.message || response.statusText}`);
+    }
+
+    const data = await response.json();
+    return {
+      url: `https://${data.url}`,
+      inspectUrl: `https://vercel.com/${teamId || 'dashboard'}/deployments/${data.id}`
+    };
+  }
 }

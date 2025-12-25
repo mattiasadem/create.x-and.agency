@@ -1,6 +1,10 @@
 import React from 'react';
 
-const CircuitBackground = () => {
+interface CircuitBackgroundProps {
+    showVignette?: boolean;
+}
+
+const CircuitBackground = ({ showVignette = true }: CircuitBackgroundProps) => {
     return (
         <div className="absolute inset-0 w-full h-full overflow-hidden bg-[#020405]">
             {/* 1. Subtle Grid Background */}
@@ -101,7 +105,9 @@ const CircuitBackground = () => {
             </svg>
 
             {/* 3. Radial Fade Overlay (Vignette) for center readability */}
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,_rgba(2,4,5,1)_0%,_rgba(2,4,5,0.4)_50%,_transparent_100%)] z-10 pointer-events-none"></div>
+            {showVignette && (
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_40%,_rgba(2,4,5,1)_0%,_rgba(2,4,5,0.4)_50%,_transparent_100%)] z-10 pointer-events-none"></div>
+            )}
         </div>
     );
 };
