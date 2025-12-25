@@ -286,7 +286,7 @@ export async function POST(request: NextRequest) {
     if (morphEnabled) {
       console.log('[apply-ai-code-stream] Morph edits found:', morphEdits.length);
     }
-    
+
     // Log what was parsed
     console.log('[apply-ai-code-stream] Parsed result:');
     console.log('[apply-ai-code-stream] Files found:', parsed.files.length);
@@ -318,7 +318,7 @@ export async function POST(request: NextRequest) {
         provider = await sandboxManager.getOrCreateProvider(sandboxId);
 
         // If we got a new provider (not reconnected), we need to create a new sandbox
-        if (!provider.getSandboxInfo()) {
+        if (provider && !provider.getSandboxInfo()) {
           console.log(`[apply-ai-code-stream] Creating new sandbox since reconnection failed for ${sandboxId}`);
           await provider.createSandbox();
           await provider.setupViteApp();
@@ -423,7 +423,7 @@ export async function POST(request: NextRequest) {
             await sendProgress({ type: 'warning', message: 'Morph enabled but no <edit> blocks found; falling back to full-file flow' });
           }
         }
-        
+
         // Step 1: Install packages
         const packagesArray = Array.isArray(packages) ? packages : [];
         const parsedPackages = Array.isArray(parsed.packages) ? parsed.packages : [];
@@ -579,15 +579,15 @@ export async function POST(request: NextRequest) {
             let normalizedPath = file.path.startsWith('/') ? file.path.slice(1) : file.path;
             const fileName = normalizedPath.split('/').pop() || '';
             if (!normalizedPath.startsWith('src/') &&
-                !normalizedPath.startsWith('public/') &&
-                normalizedPath !== 'index.html' &&
-                !configFiles.includes(fileName)) {
+              !normalizedPath.startsWith('public/') &&
+              normalizedPath !== 'index.html' &&
+              !configFiles.includes(fileName)) {
               normalizedPath = 'src/' + normalizedPath;
             }
             return !morphUpdatedPaths.has(normalizedPath);
           });
         }
-        
+
         for (const [index, file] of filteredFiles.entries()) {
           try {
             // Send progress for each file
