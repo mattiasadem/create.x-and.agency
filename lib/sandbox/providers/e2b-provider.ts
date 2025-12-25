@@ -11,13 +11,24 @@ export class E2BProvider extends SandboxProvider {
    */
   async reconnect(sandboxId: string): Promise<boolean> {
     try {
-
       // Try to connect to existing sandbox
-      // Note: E2B SDK doesn't directly support reconnection, but we can try to recreate
-      // For now, return false to indicate reconnection isn't supported
-      // In the future, E2B may add this capability
+      this.sandbox = await Sandbox.connect(sandboxId);
 
-      return false;
+      const host = (this.sandbox as any).getHost(appConfig.e2b.vitePort);
+
+      this.sandboxInfo = {
+        sandboxId,
+        url: `https://${host}`,
+        provider: 'e2b',
+        createdAt: new Date() // We don't know the original creation time, so using now
+      };
+
+      // Set extended timeout if available
+      if (typeof this.sandbox.setTimeout === 'function') {
+        this.sandbox.setTimeout(appConfig.e2b.timeoutMs);
+      }
+
+      return true;
     } catch (error) {
       console.error(`[E2BProvider] Failed to reconnect to sandbox ${sandboxId}:`, error);
       return false;
@@ -502,5 +513,20 @@ print(f'✓ Vite restarted with PID: {process.pid}')
 
   isAlive(): boolean {
     return !!this.sandbox;
+  }
+
+  async getDownloadUrl(path: string): Promise<string> {
+    if (!this.sandbox) {
+      throw new Error('No active sandbox');
+    }
+
+    const fullPath = path.startsWith('/') ? path : `/home/user/app/${path}`;
+
+    // Use the downloadUrl method from E2B SDK
+    if (typeof (this.sandbox as any).downloadUrl === 'function') {
+      return await (this.sandbox as any).downloadUrl(fullPath);
+    }
+
+    throw new Error('Download URL generation not supported by this sandbox version');
   }
 }

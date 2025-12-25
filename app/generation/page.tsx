@@ -174,6 +174,14 @@ function AISandboxPage() {
   // Store flag to trigger generation after component mounts
   const [shouldAutoGenerate, setShouldAutoGenerate] = useState(false);
 
+  // Trap back button by pushing state when generation is active
+  useEffect(() => {
+    if (loading || generationProgress.isGenerating || loadingStage) {
+      // Push a state so that "Back" hits our popstate listener
+      window.history.pushState(null, '', window.location.href);
+    }
+  }, [loading, generationProgress.isGenerating, loadingStage]);
+
   // Clear old conversation data on component mount and create/restore sandbox
   useEffect(() => {
     let isMounted = true;
@@ -415,6 +423,9 @@ function AISandboxPage() {
 
       // If it's a link, not a new tab, and not just a hash change
       if (anchor && anchor.href && anchor.target !== '_blank' && !anchor.href.includes('#')) {
+        // Ignore download links
+        if (anchor.hasAttribute('download')) return;
+
         const url = new URL(anchor.href);
         const isSamePage = url.pathname === window.location.pathname && url.search === window.location.search;
 
@@ -1847,8 +1858,8 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     return null;
   };
 
-  const sendChatMessage = async (overrideMessage?: string) => {
-    const message = overrideMessage || aiChatInput.trim();
+  const sendChatMessage = async (overrideMessage?: string | any) => {
+    const message = (typeof overrideMessage === 'string' ? overrideMessage : aiChatInput).trim();
     if (!message) return;
 
     if (!aiEnabled) {
@@ -1857,7 +1868,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     }
 
     addChatMessage(message, 'user');
-    if (!overrideMessage) {
+    if (typeof overrideMessage !== 'string') {
       setAiChatInput('');
     }
 
@@ -2302,7 +2313,10 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     try {
       const response = await fetch('/api/create-zip', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sandboxId: sandboxData.sandboxId
+        })
       });
 
       const data = await response.json();
@@ -2314,6 +2328,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
         const link = document.createElement('a');
         link.href = data.dataUrl;
         link.download = data.fileName || 'e2b-project.zip';
+        link.target = '_blank';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
@@ -3619,9 +3634,11 @@ Focus on the key sections and content, making it clean and modern.`;
                 ref={chatMessagesRef}>
                 {chatMessages.map((msg, idx) => {
                   // Check if this message is from a successful generation
-                  const isGenerationComplete = msg.content.includes('Successfully recreated') ||
+                  const isGenerationComplete = (typeof msg.content === 'string' && (
+                    msg.content.includes('Successfully recreated') ||
                     msg.content.includes('AI recreation generated!') ||
-                    msg.content.includes('Code generated!');
+                    msg.content.includes('Code generated!')
+                  ));
 
                   // Get the files from metadata if this is a completion message
                   // const completedFiles = msg.metadata?.appliedFiles || [];

@@ -15,7 +15,7 @@ class SandboxManager {
   /**
    * Get or create a sandbox provider for the given sandbox ID
    */
-  async getOrCreateProvider(sandboxId: string): Promise<SandboxProvider> {
+  async getOrCreateProvider(sandboxId: string): Promise<SandboxProvider | null> {
     // Check if we already have this sandbox
     const existing = this.sandboxes.get(sandboxId);
     if (existing) {
@@ -24,10 +24,10 @@ class SandboxManager {
     }
 
     // Try to reconnect to existing sandbox
-    
+
     try {
       const provider = SandboxFactory.create();
-      
+
       // For E2B provider, try to reconnect
       if (provider.constructor.name === 'E2BProvider') {
         // E2B sandboxes can be reconnected using the sandbox ID
@@ -43,10 +43,11 @@ class SandboxManager {
           return provider;
         }
       }
-      
-      // For Vercel or if reconnection failed, return the new provider
-      // The caller will need to handle creating a new sandbox
-      return provider;
+
+      // For Vercel or if reconnection failed
+      // If we failed to reconnect, we should NOT return a new provider for the expected ID
+      // because that would imply we have the session but we don't.
+      return null;
     } catch (error) {
       console.error(`[SandboxManager] Error reconnecting to sandbox ${sandboxId}:`, error);
       throw error;
@@ -73,13 +74,13 @@ class SandboxManager {
     if (!this.activeSandboxId) {
       return null;
     }
-    
+
     const sandbox = this.sandboxes.get(this.activeSandboxId);
     if (sandbox) {
       sandbox.lastAccessed = new Date();
       return sandbox.provider;
     }
-    
+
     return null;
   }
 
@@ -118,7 +119,7 @@ class SandboxManager {
         console.error(`[SandboxManager] Error terminating sandbox ${sandboxId}:`, error);
       }
       this.sandboxes.delete(sandboxId);
-      
+
       if (this.activeSandboxId === sandboxId) {
         this.activeSandboxId = null;
       }
@@ -129,12 +130,12 @@ class SandboxManager {
    * Terminate all sandboxes
    */
   async terminateAll(): Promise<void> {
-    const promises = Array.from(this.sandboxes.values()).map(sandbox => 
-      sandbox.provider.terminate().catch(err => 
+    const promises = Array.from(this.sandboxes.values()).map(sandbox =>
+      sandbox.provider.terminate().catch(err =>
         console.error(`[SandboxManager] Error terminating sandbox ${sandbox.sandboxId}:`, err)
       )
     );
-    
+
     await Promise.all(promises);
     this.sandboxes.clear();
     this.activeSandboxId = null;
@@ -146,14 +147,14 @@ class SandboxManager {
   async cleanup(maxAge: number = 3600000): Promise<void> {
     const now = new Date();
     const toDelete: string[] = [];
-    
+
     for (const [id, info] of this.sandboxes.entries()) {
       const age = now.getTime() - info.lastAccessed.getTime();
       if (age > maxAge) {
         toDelete.push(id);
       }
     }
-    
+
     for (const id of toDelete) {
       await this.terminateSandbox(id);
     }

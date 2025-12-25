@@ -1,69 +1,58 @@
 import { NextResponse } from 'next/server';
+import { sandboxManager } from '@/lib/sandbox/sandbox-manager';
 
-declare global {
-  var activeSandbox: any;
-}
-
-export async function POST() {
+export async function POST(req: Request) {
   try {
-    if (!global.activeSandbox) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'No active sandbox' 
+    const { sandboxId } = await req.json();
+
+    if (!sandboxId) {
+      return NextResponse.json({
+        success: false,
+        error: 'No sandbox ID provided'
       }, { status: 400 });
     }
-    
-    console.log('[create-zip] Creating project zip...');
-    
-    // Create zip file in sandbox using standard commands
-    const zipResult = await global.activeSandbox.runCommand({
-      cmd: 'bash',
-      args: ['-c', `zip -r /tmp/project.zip . -x "node_modules/*" ".git/*" ".next/*" "dist/*" "build/*" "*.log"`]
-    });
-    
+
+    console.log(`[create-zip] Creating project zip for sandbox ${sandboxId}...`);
+
+    const sandbox = await sandboxManager.getOrCreateProvider(sandboxId);
+
+    if (!sandbox) {
+      return NextResponse.json({
+        success: false,
+        error: 'Sandbox not found or could not be reconnected'
+      }, { status: 404 });
+    }
+
+    // Create zip file in sandbox
+    const zipCommand = 'zip -r /tmp/project.zip . -x "node_modules/*" ".git/*" ".next/*" "dist/*" "build/*" "*.log"';
+    const zipResult = await sandbox.runCommand(zipCommand);
+
     if (zipResult.exitCode !== 0) {
-      const error = await zipResult.stderr();
-      throw new Error(`Failed to create zip: ${error}`);
+      throw new Error(`Failed to create zip: ${zipResult.stderr || 'Unknown error'}`);
     }
-    
-    const sizeResult = await global.activeSandbox.runCommand({
-      cmd: 'bash',
-      args: ['-c', `ls -la /tmp/project.zip | awk '{print $5}'`]
-    });
-    
-    const fileSize = await sizeResult.stdout();
-    console.log(`[create-zip] Created project.zip (${fileSize.trim()} bytes)`);
-    
-    // Read the zip file and convert to base64
-    const readResult = await global.activeSandbox.runCommand({
-      cmd: 'base64',
-      args: ['/tmp/project.zip']
-    });
-    
-    if (readResult.exitCode !== 0) {
-      const error = await readResult.stderr();
-      throw new Error(`Failed to read zip file: ${error}`);
-    }
-    
-    const base64Content = (await readResult.stdout()).trim();
-    
-    // Create a data URL for download
-    const dataUrl = `data:application/zip;base64,${base64Content}`;
-    
+
+    // Get file size for logging
+    const sizeResult = await sandbox.runCommand('ls -la /tmp/project.zip | awk \'{print $5}\'');
+    console.log(`[create-zip] Created project.zip (${sizeResult.stdout.trim()} bytes)`);
+
+    // Generate secure download URL
+    console.log('[create-zip] Generating download URL...');
+    const downloadUrl = await sandbox.getDownloadUrl('/tmp/project.zip');
+
     return NextResponse.json({
       success: true,
-      dataUrl,
-      fileName: 'vercel-sandbox-project.zip',
+      dataUrl: downloadUrl, // Keeping key 'dataUrl' to match frontend expectation, though it's now a real URL
+      fileName: 'project.zip',
       message: 'Zip file created successfully'
     });
-    
+
   } catch (error) {
     console.error('[create-zip] Error:', error);
     return NextResponse.json(
-      { 
-        success: false, 
-        error: (error as Error).message 
-      }, 
+      {
+        success: false,
+        error: (error as Error).message
+      },
       { status: 500 }
     );
   }
