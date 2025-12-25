@@ -588,6 +588,50 @@ body {
     }
   }
 
+  async getDownloadUrl(path: string): Promise<string> {
+    if (!this.sandbox || !this.sandboxInfo) {
+      throw new Error('No active sandbox');
+    }
+
+    const fileName = path.split('/').pop() || 'download';
+    // Simple random string to prevent caching/collisions
+    const randomHash = Math.random().toString(36).substring(2, 8);
+    // Ensure filename is safe
+    const safeFileName = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const publicFileName = `${randomHash}-${safeFileName}`;
+    const publicPath = `/vercel/sandbox/public/${publicFileName}`;
+
+    // Create public dir if it doesn't exist
+    await this.sandbox.runCommand({
+      cmd: 'mkdir',
+      args: ['-p', '/vercel/sandbox/public'],
+      cwd: '/vercel/sandbox'
+    });
+
+    // Copy file to public directory
+    const copyResult = await this.sandbox.runCommand({
+      cmd: 'cp',
+      args: [path, publicPath],
+      cwd: '/vercel/sandbox'
+    });
+
+    if (copyResult.exitCode !== 0) {
+      let stderr = '';
+      try {
+        if (typeof copyResult.stderr === 'function') {
+          stderr = await copyResult.stderr();
+        } else {
+          stderr = copyResult.stderr || '';
+        }
+      } catch (e) {
+        stderr = 'Unknown error';
+      }
+      throw new Error(`Failed to prepare download: ${stderr}`);
+    }
+
+    return `${this.sandboxInfo.url}/${publicFileName}`;
+  }
+
   isAlive(): boolean {
     return !!this.sandbox;
   }
