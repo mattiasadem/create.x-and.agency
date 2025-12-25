@@ -28,6 +28,7 @@ import CircuitBackground from '@/components/app/(home)/sections/hero/CircuitBack
 import { motion } from 'framer-motion';
 import CodeApplicationProgress, { type CodeApplicationState } from '@/components/CodeApplicationProgress';
 import LoadingCard from './LoadingCard';
+import CyberDialog from '@/components/shared/ui/CyberDialog';
 
 interface SandboxData {
   sandboxId: string;
@@ -106,13 +107,18 @@ function AISandboxPage() {
   const [targetUrl, setTargetUrl] = useState<string>('');
   const [sidebarScrolled, setSidebarScrolled] = useState(false);
   const [screenshotCollapsed, setScreenshotCollapsed] = useState(false);
-  const [loadingStage, setLoadingStage] = useState<'gathering' | 'planning' | 'generating' | null>(null);
+  const [loadingStage, setLoadingStage] = useState<'initializing' | 'planning' | 'preparing' | 'optimizing' | 'analyzing' | 'generating' | 'gathering' | null>(null);
   const [isStartingNewGeneration, setIsStartingNewGeneration] = useState(false);
   const [sandboxFiles, setSandboxFiles] = useState<Record<string, string>>({});
   const [hasInitialSubmission, setHasInitialSubmission] = useState<boolean>(false);
   const [fileStructure, setFileStructure] = useState<string>('');
   const [expandedMessages, setExpandedMessages] = useState<Set<number>>(new Set());
   const [autoSendPrompt, setAutoSendPrompt] = useState<string | null>(null);
+
+  // Custom dialog state for in-app navigation
+  const [showLeaveDialog, setShowLeaveDialog] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const isLeavingRef = useRef(false);
 
   const [conversationContext, setConversationContext] = useState<{
     scrapedWebsites: Array<{ url: string; content: any; timestamp: Date }>;
@@ -365,6 +371,80 @@ function AISandboxPage() {
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Warning before leaving the page if generating (Native Browser Dialog)
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      // Only trigger if we are actively generating/loading AND we haven't already
+      // confirmed a leave action via our custom dialog (isLeavingRef)
+      if (!isLeavingRef.current && (loading || generationProgress.isGenerating || loadingStage)) {
+        e.preventDefault();
+        e.returnValue = ''; // Standard for Chrome/Firefox to trigger the dialog
+        return ''; // Standard for some other browsers
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [loading, generationProgress.isGenerating, loadingStage]);
+
+  // Block popstate (back button) if generating
+  useEffect(() => {
+    const handlePopState = (e: PopStateEvent) => {
+      if (isLeavingRef.current) return;
+
+      if (loading || generationProgress.isGenerating || loadingStage) {
+        // Push current state back to block the navigation
+        window.history.pushState(null, '', window.location.href);
+        setPendingNavigation('back');
+        setShowLeaveDialog(true);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [loading, generationProgress.isGenerating, loadingStage]);
+
+  // Global link interception
+  useEffect(() => {
+    const handleGlobalClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const anchor = target.closest('a');
+
+      // If it's a link, not a new tab, and not just a hash change
+      if (anchor && anchor.href && anchor.target !== '_blank' && !anchor.href.includes('#')) {
+        const url = new URL(anchor.href);
+        const isSamePage = url.pathname === window.location.pathname && url.search === window.location.search;
+
+        if (!isSamePage && (loading || generationProgress.isGenerating || loadingStage)) {
+          e.preventDefault();
+          setPendingNavigation(anchor.href);
+          setShowLeaveDialog(true);
+        }
+      }
+    };
+
+    document.addEventListener('click', handleGlobalClick);
+    return () => document.removeEventListener('click', handleGlobalClick);
+  }, [loading, generationProgress.isGenerating, loadingStage]);
+
+  // Keyboard reload interception
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const isReload =
+        (e.key === 'r' && (e.metaKey || e.ctrlKey)) ||
+        (e.key === 'F5');
+
+      if (isReload && (loading || generationProgress.isGenerating || loadingStage)) {
+        e.preventDefault();
+        setPendingNavigation('reload');
+        setShowLeaveDialog(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [loading, generationProgress.isGenerating, loadingStage]);
+
   useEffect(() => {
     if (chatMessagesRef.current) {
       chatMessagesRef.current.scrollTop = chatMessagesRef.current.scrollHeight;
@@ -432,6 +512,7 @@ function AISandboxPage() {
     }
 
     // Vite error checking removed - handled by template setup
+    setLoadingStage('optimizing');
     addChatMessage('Checking packages... Sandbox is ready with Vite configuration.', 'system');
   };
 
@@ -567,6 +648,7 @@ function AISandboxPage() {
     setLoading(true);
     setShowLoadingBackground(true);
     updateStatus('Creating sandbox...', false);
+    setLoadingStage('initializing');
     addChatMessage('Initializing secure sandbox environment...', 'system');
     setResponseArea([]);
     setScreenshotError(null);
@@ -589,6 +671,7 @@ function AISandboxPage() {
         log('Sandbox created successfully!');
         log(`Sandbox ID: ${data.sandboxId}`);
         log(`URL: ${data.url}`);
+        setLoadingStage(null);
 
         // Update URL with sandbox ID
         const newParams = new URLSearchParams(searchParams.toString());
@@ -658,6 +741,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
 
     try {
       // Show progress component instead of individual messages
+      setLoadingStage(null);
       setCodeApplicationState({ stage: 'analyzing' });
 
       // Get pending packages from tool calls
@@ -1086,6 +1170,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
       log(`Failed to apply code: ${error.message}`, 'error');
     } finally {
       setLoading(false);
+      setLoadingStage(null);
       // Clear isEdit flag after applying code
       setGenerationProgress(prev => ({
         ...prev,
@@ -1521,6 +1606,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
         return (
           <div className="relative w-full h-full bg-[#020405] overflow-hidden">
             <CircuitBackground />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
 
             {/* Screenshot as background when available - dimmed */}
             {urlScreenshot && (
@@ -1535,41 +1621,45 @@ Tip: I automatically detect and install npm packages from your code imports (lik
 
             {/* Interactive Loading Overlay */}
             {shouldShowLoadingOverlay && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center z-10">
-                <div className="relative w-full max-w-lg px-8 py-20">
-                  {/* Decorative corner brackets */}
-                  <div className="absolute top-0 left-0 w-16 h-16 border-l-2 border-t-2 border-cyan-500/30 rounded-tl-lg" />
-                  <div className="absolute top-0 right-0 w-16 h-16 border-r-2 border-t-2 border-cyan-500/30 rounded-tr-lg" />
-                  <div className="absolute bottom-0 left-0 w-16 h-16 border-l-2 border-b-2 border-cyan-500/30 rounded-bl-lg" />
-                  <div className="absolute bottom-0 right-0 w-16 h-16 border-r-2 border-b-2 border-cyan-500/30 rounded-br-lg" />
-
-                  {/* Central animated loader */}
-                  <div className="flex flex-col items-center justify-center relative">
+              <div className="absolute inset-0 flex items-center justify-center z-10">
+                <LoadingCard>
+                  <div className="flex flex-col items-center justify-center relative z-10 w-full">
+                    {/* Futuristic Loader */}
                     <div className="w-16 h-16 relative mb-8">
                       <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
                       <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
                     </div>
 
                     {/* Status Text with Glitch Effect */}
-                    <div className="text-center space-y-4 relative z-10">
-                      <h3 className="text-3xl font-display font-bold text-white tracking-wide">
+                    <div className="text-center space-y-4 relative z-10 w-full">
+                      <h3 className="text-2xl font-display font-bold text-white tracking-wide">
                         {isCapturingScreenshot ? 'ANALYZING TARGET' :
-                          isPreparingDesign ? 'DECODING DESIGN SYSTEM' :
-                            generationProgress.isGenerating ? 'ASSEMBLING INTERFACE' :
-                              'INITIALIZING'}
+                          loadingStage === 'initializing' ? 'INITIALIZING' :
+                            loadingStage === 'planning' ? 'PLANNING' :
+                              loadingStage === 'preparing' ? 'PREPARING' :
+                                loadingStage === 'optimizing' ? 'OPTIMIZING' :
+                                  loadingStage === 'analyzing' ? 'ANALYZING' :
+                                    (loadingStage === 'generating' || generationProgress.isGenerating) ? 'ASSEMBLING INTERFACE' :
+                                      isPreparingDesign ? 'DECODING DESIGN SYSTEM' :
+                                        'INITIALIZING'}
                       </h3>
 
-                      <div className="h-px w-32 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent mx-auto" />
+                      <div className="h-px w-24 bg-gradient-to-r from-transparent via-cyan-500/50 to-transparent mx-auto" />
 
-                      <p className="font-mono text-cyan-400/70 text-sm tracking-wider uppercase">
+                      <p className="font-mono text-cyan-400/70 text-xs tracking-wider uppercase">
                         {isCapturingScreenshot ? 'Extracting visual data points...' :
-                          isPreparingDesign ? 'Parsing layout structure...' :
-                            generationProgress.isGenerating ? 'Compiling React components...' :
-                              'Stand by...'}
+                          loadingStage === 'initializing' ? 'Setting up secure sandbox environment...' :
+                            loadingStage === 'planning' ? 'Creating sandbox while I plan your app...' :
+                              loadingStage === 'preparing' ? 'Waiting for sandbox to be ready...' :
+                                loadingStage === 'optimizing' ? 'Checking packages and configuration...' :
+                                  loadingStage === 'analyzing' ? 'Extracting brand styles from website...' :
+                                    (loadingStage === 'generating' || generationProgress.isGenerating) ? 'Compiling React components...' :
+                                      isPreparingDesign ? 'Parsing layout structure...' :
+                                        'Stand by...'}
                       </p>
                     </div>
                   </div>
-                </div>
+                </LoadingCard>
               </div>
             )}
           </div>
@@ -1650,7 +1740,31 @@ Tip: I automatically detect and install npm packages from your code imports (lik
               </LoadingCard>
             )}
 
-
+            {/* Granular Loading Overlay (for stages like optimizing, analyzing, etc) */}
+            {loadingStage && !codeApplicationState.stage && (
+              <LoadingCard key="granular-loading">
+                <div className="flex flex-col items-center">
+                  <div className="w-16 h-16 relative mb-8">
+                    <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
+                    <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                  </div>
+                  <h3 className="text-lg font-display font-medium text-white mb-1 uppercase tracking-wider">
+                    {loadingStage === 'optimizing' ? 'Optimizing Environment' :
+                      loadingStage === 'analyzing' ? 'Analyzing Assets' :
+                        loadingStage === 'generating' ? 'Generating Code' :
+                          loadingStage === 'preparing' ? 'Preparing Sandbox' :
+                            'Working...'}
+                  </h3>
+                  <p className="text-gray-500 text-sm font-mono text-center max-w-xs">
+                    {loadingStage === 'optimizing' ? 'Checking packages and configuration...' :
+                      loadingStage === 'analyzing' ? 'Extracting brand styles from website...' :
+                        loadingStage === 'generating' ? 'Building your custom component...' :
+                          loadingStage === 'preparing' ? 'Establishing secure preview channel...' :
+                            'Please wait while we process your request...'}
+                  </p>
+                </div>
+              </LoadingCard>
+            )}
             {/* Subtle "Generating" Indicator */}
             {
               generationProgress.isGenerating && generationProgress.isEdit && !codeApplicationState.stage && (
@@ -1692,15 +1806,15 @@ Tip: I automatically detect and install npm packages from your code imports (lik
 
           <div className="relative z-10 w-full h-full flex items-center justify-center px-6">
             {screenshotError ? (
-              <div className="w-full max-w-lg px-8 py-20 border border-red-500/30 rounded-xl bg-red-950/20 shadow-2xl relative overflow-hidden backdrop-blur-md">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-500 to-transparent opacity-50" />
-                <h3 className="text-xl font-display font-medium text-white mb-2 text-center">Detailed Analysis Failed</h3>
-                <p className="text-sm text-red-300/80 leading-relaxed mb-4 text-center">{screenshotError}</p>
-                <div className="text-xs text-gray-500 font-mono text-center">Systems initialized in fallback mode</div>
-              </div>
+              <LoadingCard>
+                <div className="w-full">
+                  <h3 className="text-xl font-display font-medium text-white mb-2 text-center">Detailed Analysis Failed</h3>
+                  <p className="text-sm text-red-300/80 leading-relaxed mb-4 text-center">{screenshotError}</p>
+                  <div className="text-xs text-gray-500 font-mono text-center">Systems initialized in fallback mode</div>
+                </div>
+              </LoadingCard>
             ) : sandboxData ? (
-              <div className="w-full max-w-lg px-8 py-20 border border-white/10 rounded-xl bg-black/50 shadow-2xl relative overflow-hidden backdrop-blur-md">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50" />
+              <LoadingCard>
                 <div className="flex flex-col items-center">
                   <div className="w-16 h-16 relative mb-6">
                     <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
@@ -1709,7 +1823,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                   <h3 className="text-lg font-display font-medium text-white mb-1">CONNECTING TO SANDBOX</h3>
                   <p className="text-gray-500 text-sm font-mono">Establishing secure preview channel...</p>
                 </div>
-              </div>
+              </LoadingCard>
             ) : (
               <LoadingCard>
                 <div className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
@@ -1762,8 +1876,10 @@ Tip: I automatically detect and install npm packages from your code imports (lik
 
     if (!sandboxData) {
       sandboxCreating = true;
+      setLoadingStage('planning');
       addChatMessage('Creating sandbox while I plan your app...', 'system');
       sandboxPromise = createSandbox(true).catch((error: any) => {
+        setLoadingStage(null);
         addChatMessage(`Failed to create sandbox: ${error.message}`, 'system');
         throw error;
       });
@@ -1811,6 +1927,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
       console.log('[chat] - sandboxId:', fullContext.sandboxId);
       console.log('[chat] - isEdit:', conversationContext.appliedCode.length > 0);
 
+      setLoadingStage('generating');
       const response = await fetch('/api/generate-ai-code-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1996,6 +2113,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                     status: data.message || `Installing ${data.name}`
                   }));
                 } else if (data.type === 'complete') {
+                  setLoadingStage(null);
                   generatedCode = data.generatedCode;
                   explanation = data.explanation;
 
@@ -2096,6 +2214,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
         // Wait for sandbox creation if it's still in progress
         let activeSandboxData = sandboxData;
         if (sandboxPromise) {
+          setLoadingStage('preparing');
           addChatMessage('Waiting for sandbox to be ready...', 'system');
           try {
             const newSandboxData = await sandboxPromise;
@@ -2105,6 +2224,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
               setSandboxData(newSandboxData);
             }
             // Remove the waiting message
+            setLoadingStage(null);
             setChatMessages(prev => prev.filter(msg => msg.content !== 'Waiting for sandbox to be ready...'));
           } catch {
             addChatMessage('Sandbox creation failed. Cannot apply code.', 'system');
@@ -2144,6 +2264,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
       }, 1000); // Reduced from 3000ms to 1000ms
     } catch (error: any) {
       setChatMessages(prev => prev.filter(msg => msg.content !== 'Thinking...'));
+      setLoadingStage(null);
       addChatMessage(`Error: ${error.message}`, 'system');
       // Reset generation progress and switch back to preview on error
       setGenerationProgress({
@@ -2728,6 +2849,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
 
         if (brandExtensionMode) {
           // === BRAND EXTENSION MODE ===
+          setLoadingStage('analyzing');
           addChatMessage('Extracting brand styles from the website...', 'system');
 
           // Call the brand extraction endpoint
@@ -2755,6 +2877,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
             brandingData: brandGuidelines.guidelines,
             sourceUrl: cleanUrl
           });
+          setLoadingStage('generating');
           addChatMessage(`Building your custom component using these brand guidelines...`, 'system');
 
           // Clear the flags after use
@@ -3301,7 +3424,17 @@ Focus on the key sections and content, making it clean and modern.`;
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(2,4,5,0)_0%,_rgba(2,4,5,0.8)_100%)] pointer-events-none z-0" />
 
         <div className="relative z-50 bg-[#0a0f14]/80 backdrop-blur-lg h-[64px] border-b border-white/10 flex items-center justify-between shadow-sm pl-12 pr-6 header">
-          <a href="https://www.x-and.agency/" className="flex items-center gap-2 cursor-pointer no-underline">
+          <a
+            href="https://www.x-and.agency/"
+            onClick={(e) => {
+              if (loading || generationProgress.isGenerating || loadingStage) {
+                e.preventDefault();
+                setPendingNavigation('https://www.x-and.agency/');
+                setShowLeaveDialog(true);
+              }
+            }}
+            className="flex items-center gap-2 cursor-pointer no-underline"
+          >
             <span className="text-xl font-display font-normal tracking-wide text-white">x-and</span>
           </a>
           <div className="flex items-center gap-2">
@@ -3366,6 +3499,11 @@ Focus on the key sections and content, making it clean and modern.`;
             {!hasInitialSubmission ? (
               <div className="p-4 border-b border-white/10">
                 <SidebarInput
+                  shouldWarnLeave={loading || generationProgress.isGenerating || loadingStage !== null}
+                  onWarnLeave={(target) => {
+                    setPendingNavigation(target);
+                    setShowLeaveDialog(true);
+                  }}
                   onSubmit={(url, style, model, instructions) => {
                     // Mark that we've had an initial submission
                     setHasInitialSubmission(true);
@@ -3973,6 +4111,29 @@ Focus on the key sections and content, making it clean and modern.`;
           </div>
         </div>
       </div>
+
+      <CyberDialog
+        isOpen={showLeaveDialog}
+        onClose={() => setShowLeaveDialog(false)}
+        onConfirm={() => {
+          // Set leaving flag to prevent native beforeunload dialog
+          isLeavingRef.current = true;
+
+          if (pendingNavigation === 'back') {
+            window.history.back();
+          } else if (pendingNavigation === 'reload') {
+            window.location.reload();
+          } else if (pendingNavigation) {
+            window.location.href = pendingNavigation;
+          }
+          setShowLeaveDialog(false);
+        }}
+        title="Active Generation Detected"
+        description="Leaving now will interrupt the current process and any unsaved changes will be lost. Digital assets in progress may be corrupted."
+        confirmText="Terminate & Leave"
+        cancelText="Continue Creating"
+        variant="danger"
+      />
     </HeaderProvider>
   );
 }

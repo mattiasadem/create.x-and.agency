@@ -40,7 +40,8 @@ export default function LoadingScreensGallery() {
                     <h2 className="text-xl font-mono text-cyan-500">2. Initial Generation (Analysis)</h2>
                     <div className="relative h-[600px] bg-[#020405] border border-white/10 rounded-xl overflow-hidden flex flex-col items-center justify-center">
                         <CircuitBackground />
-                        <div className="absolute inset-0 bg-black/90 backdrop-blur-md flex items-center justify-center z-50">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+                        <div className="absolute inset-0 flex items-center justify-center z-50">
                             <LoadingCard>
                                 <div className="flex flex-col items-center justify-center relative z-10 w-full">
                                     {/* Futuristic Loader */}
@@ -71,11 +72,8 @@ export default function LoadingScreensGallery() {
                 <div className="flex flex-col gap-2">
                     <h2 className="text-xl font-mono text-cyan-500">3. Package Installation</h2>
                     <div className="relative h-[600px] bg-[#020405] border border-white/10 rounded-xl overflow-hidden flex flex-col items-center justify-center">
-                        {/* Background Content just to show overlay effect */}
-                        <div className="absolute inset-0 bg-[#0a0f14]" />
-
-                        {/* Overlay */}
-                        <div className="absolute inset-0 bg-[#020405]/95 backdrop-blur-md flex items-center justify-center z-10">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+                        <div className="absolute inset-0 flex items-center justify-center z-10">
                             <LoadingCard>
                                 <div className="flex items-start gap-6">
                                     {/* Animated Terminal Icon */}
@@ -127,9 +125,8 @@ export default function LoadingScreensGallery() {
                 <div className="flex flex-col gap-2">
                     <h2 className="text-xl font-mono text-cyan-500">4. File Injection</h2>
                     <div className="relative h-[600px] bg-[#020405] border border-white/10 rounded-xl overflow-hidden flex flex-col items-center justify-center">
-                        <div className="absolute inset-0 bg-[#0a0f14]" />
-
-                        <div className="absolute inset-0 bg-[#020405]/95 backdrop-blur-md flex items-center justify-center z-10">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+                        <div className="absolute inset-0 flex items-center justify-center z-10">
                             <LoadingCard>
                                 <div className="flex items-start gap-6">
                                     <div className="w-16 h-16 rounded-xl bg-black border border-white/10 flex items-center justify-center flex-shrink-0">
@@ -202,6 +199,101 @@ export default function LoadingScreensGallery() {
                                 <div className="text-xs text-gray-500 font-mono text-center">Systems initialized in fallback mode</div>
                             </div>
                         </div>
+                    </div>
+                </div>
+
+                {/* 7. Initializing Stage */}
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-xl font-mono text-cyan-500">7. Initializing Stage</h2>
+                    <div className="relative h-[600px] bg-[#020405] border border-white/10 rounded-xl overflow-hidden flex flex-col items-center justify-center">
+                        <CircuitBackground />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+                        <LoadingCard>
+                            <div className="flex flex-col items-center">
+                                <div className="w-16 h-16 relative mb-8">
+                                    <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
+                                    <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                                </div>
+                                <h3 className="text-lg font-display font-medium text-white mb-1 uppercase tracking-wider">INITIALIZING</h3>
+                                <p className="text-gray-500 text-sm font-mono text-center">Setting up secure sandbox environment...</p>
+                            </div>
+                        </LoadingCard>
+                    </div>
+                </div>
+
+                {/* 8. Planning Stage */}
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-xl font-mono text-cyan-500">8. Planning Stage</h2>
+                    <div className="relative h-[600px] bg-[#020405] border border-white/10 rounded-xl overflow-hidden flex flex-col items-center justify-center">
+                        <CircuitBackground />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+                        <LoadingCard>
+                            <div className="flex flex-col items-center">
+                                <div className="w-16 h-16 relative mb-8">
+                                    <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
+                                    <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                                </div>
+                                <h3 className="text-lg font-display font-medium text-white mb-1 uppercase tracking-wider">PLANNING</h3>
+                                <p className="text-gray-500 text-sm font-mono text-center">Creating sandbox while I plan your app...</p>
+                            </div>
+                        </LoadingCard>
+                    </div>
+                </div>
+
+                {/* 9. Optimizing Stage */}
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-xl font-mono text-cyan-500">9. Optimizing Stage</h2>
+                    <div className="relative h-[600px] bg-[#020405] border border-white/10 rounded-xl overflow-hidden flex flex-col items-center justify-center">
+                        <CircuitBackground />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+                        <LoadingCard>
+                            <div className="flex flex-col items-center">
+                                <div className="w-16 h-16 relative mb-8">
+                                    <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
+                                    <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                                </div>
+                                <h3 className="text-lg font-display font-medium text-white mb-1 uppercase tracking-wider">OPTIMIZING</h3>
+                                <p className="text-gray-500 text-sm font-mono text-center">Checking packages and configuration...</p>
+                            </div>
+                        </LoadingCard>
+                    </div>
+                </div>
+
+                {/* 10. Analyzing Stage */}
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-xl font-mono text-cyan-500">10. Analyzing Stage</h2>
+                    <div className="relative h-[600px] bg-[#020405] border border-white/10 rounded-xl overflow-hidden flex flex-col items-center justify-center">
+                        <CircuitBackground />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+                        <LoadingCard>
+                            <div className="flex flex-col items-center">
+                                <div className="w-16 h-16 relative mb-8">
+                                    <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
+                                    <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                                </div>
+                                <h3 className="text-lg font-display font-medium text-white mb-1 uppercase tracking-wider">ANALYZING</h3>
+                                <p className="text-gray-500 text-sm font-mono text-center">Extracting brand styles from website...</p>
+                            </div>
+                        </LoadingCard>
+                    </div>
+                </div>
+
+                {/* 11. Generating Stage */}
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-xl font-mono text-cyan-500">11. Generating Stage</h2>
+                    <div className="relative h-[600px] bg-[#020405] border border-white/10 rounded-xl overflow-hidden flex flex-col items-center justify-center">
+                        <CircuitBackground />
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+                        <LoadingCard>
+                            <div className="flex flex-col items-center">
+                                <div className="w-16 h-16 relative mb-8">
+                                    <div className="absolute inset-0 border-2 border-gray-800 rounded-full" />
+                                    <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
+                                </div>
+                                <h3 className="text-lg font-display font-medium text-white mb-1 uppercase tracking-wider">GENERATING</h3>
+                                <p className="text-gray-500 text-sm font-mono text-center">Building your custom component...</p>
+                            </div>
+                        </LoadingCard>
                     </div>
                 </div>
 

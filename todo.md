@@ -7,6 +7,9 @@ Todo
 - [ ] publish your project to vercel
 - [ ] download code
 - [ ] save what is created to our system
+- [ ] <span className="text-xl font-bold font-display tracking-wide text-white">
+  x-and
+</span>
 
 
 Initializing secure sandbox environment...

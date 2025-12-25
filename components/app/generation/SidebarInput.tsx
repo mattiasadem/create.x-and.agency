@@ -7,9 +7,16 @@ import { appConfig } from "@/config/app.config";
 interface SidebarInputProps {
   onSubmit: (url: string, style: string, model: string, instructions?: string) => void;
   disabled?: boolean;
+  shouldWarnLeave?: boolean;
+  onWarnLeave?: (target: string) => void;
 }
 
-export default function SidebarInput({ onSubmit, disabled = false }: SidebarInputProps) {
+export default function SidebarInput({
+  onSubmit,
+  disabled = false,
+  shouldWarnLeave = false,
+  onWarnLeave
+}: SidebarInputProps) {
   const [url, setUrl] = useState<string>("");
   const [selectedStyle, setSelectedStyle] = useState<string>("1");
   const [selectedModel, setSelectedModel] = useState<string>(appConfig.ai.defaultModel);
@@ -56,11 +63,19 @@ export default function SidebarInput({ onSubmit, disabled = false }: SidebarInpu
       <div >
         <div className="p-4 border-b border-border/10">
           {/* link to home page with button */}
-          <Link href="https://www.x-and.agency">
-            <button className="w-full px-3 py-2 text-xs font-medium text-gray-400 bg-surface rounded border border-border hover:border-primary/50 hover:text-primary transition-colors focus:outline-none">
-              Generate a new website
-            </button>
-          </Link>
+          <button
+            className="w-full px-3 py-2 text-xs font-medium text-gray-400 bg-surface rounded border border-border hover:border-primary/50 hover:text-primary transition-colors focus:outline-none"
+            onClick={(e) => {
+              const target = "https://www.x-and.agency";
+              if (shouldWarnLeave && onWarnLeave) {
+                onWarnLeave(target);
+              } else {
+                window.location.href = target;
+              }
+            }}
+          >
+            Generate a new website
+          </button>
         </div>
 
         {/* Options Section - Show when valid URL */}
