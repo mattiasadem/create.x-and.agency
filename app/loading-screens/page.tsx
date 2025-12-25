@@ -4,6 +4,7 @@ import React from 'react';
 import CircuitBackground from '@/components/app/(home)/sections/hero/CircuitBackground';
 import { FiX } from '@/lib/icons';
 import LoadingCard from '../generation/LoadingCard';
+import SandboxPreview from '@/components/SandboxPreview';
 
 export default function LoadingScreensGallery() {
     return (
@@ -294,6 +295,20 @@ export default function LoadingScreensGallery() {
                                 <p className="text-gray-500 text-sm font-mono text-center">Building your custom component...</p>
                             </div>
                         </LoadingCard>
+                    </div>
+                </div>
+
+                {/* 12. Sandbox Connected */}
+                <div className="flex flex-col gap-2">
+                    <h2 className="text-xl font-mono text-cyan-500">12. Sandbox Connected</h2>
+                    <div className="relative h-[600px] bg-[#020405] border border-white/10 rounded-xl overflow-hidden flex flex-col justify-between">
+                        <div className="flex-1 p-2">
+                            <SandboxPreview
+                                type="vite"
+                                sandboxUrl="https://example.com"
+                                isLoading={false}
+                            />
+                        </div>
                     </div>
                 </div>
 

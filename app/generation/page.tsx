@@ -68,6 +68,7 @@ interface ScrapeData {
 function AISandboxPage() {
   const [sandboxData, setSandboxData] = useState<SandboxData | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isSandboxIframeLoaded, setIsSandboxIframeLoaded] = useState(false);
   const [status, setStatus] = useState({ text: 'Not connected', active: false });
   const [responseArea, setResponseArea] = useState<string[]>([]);
   const [structureContent, setStructureContent] = useState('No sandbox created yet');
@@ -174,13 +175,17 @@ function AISandboxPage() {
   // Store flag to trigger generation after component mounts
   const [shouldAutoGenerate, setShouldAutoGenerate] = useState(false);
 
+  // Consolidate active state check
+  const isGenerationActive = loading || generationProgress.isGenerating || loadingStage !== null;
+
   // Trap back button by pushing state when generation is active
   useEffect(() => {
-    if (loading || generationProgress.isGenerating || loadingStage) {
+    if (isGenerationActive) {
       // Push a state so that "Back" hits our popstate listener
+      // We push it twice to ensure we have a buffer for the "first" back click
       window.history.pushState(null, '', window.location.href);
     }
-  }, [loading, generationProgress.isGenerating, loadingStage]);
+  }, [isGenerationActive]);
 
   // Clear old conversation data on component mount and create/restore sandbox
   useEffect(() => {
@@ -387,7 +392,7 @@ function AISandboxPage() {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       // Only trigger if we are actively generating/loading AND we haven't already
       // confirmed a leave action via our custom dialog (isLeavingRef)
-      if (!isLeavingRef.current && (loading || generationProgress.isGenerating || loadingStage)) {
+      if (!isLeavingRef.current && isGenerationActive) {
         e.preventDefault();
         e.returnValue = ''; // Standard for Chrome/Firefox to trigger the dialog
         return ''; // Standard for some other browsers
@@ -396,14 +401,14 @@ function AISandboxPage() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [loading, generationProgress.isGenerating, loadingStage]);
+  }, [isGenerationActive]);
 
   // Block popstate (back button) if generating
   useEffect(() => {
     const handlePopState = (e: PopStateEvent) => {
       if (isLeavingRef.current) return;
 
-      if (loading || generationProgress.isGenerating || loadingStage) {
+      if (isGenerationActive) {
         // Push current state back to block the navigation
         window.history.pushState(null, '', window.location.href);
         setPendingNavigation('back');
@@ -413,7 +418,7 @@ function AISandboxPage() {
 
     window.addEventListener('popstate', handlePopState);
     return () => window.removeEventListener('popstate', handlePopState);
-  }, [loading, generationProgress.isGenerating, loadingStage]);
+  }, [isGenerationActive]);
 
   // Global link interception
   useEffect(() => {
@@ -429,7 +434,7 @@ function AISandboxPage() {
         const url = new URL(anchor.href);
         const isSamePage = url.pathname === window.location.pathname && url.search === window.location.search;
 
-        if (!isSamePage && (loading || generationProgress.isGenerating || loadingStage)) {
+        if (!isSamePage && isGenerationActive) {
           e.preventDefault();
           setPendingNavigation(anchor.href);
           setShowLeaveDialog(true);
@@ -439,7 +444,7 @@ function AISandboxPage() {
 
     document.addEventListener('click', handleGlobalClick);
     return () => document.removeEventListener('click', handleGlobalClick);
-  }, [loading, generationProgress.isGenerating, loadingStage]);
+  }, [isGenerationActive]);
 
   // Keyboard reload interception
   useEffect(() => {
@@ -448,7 +453,7 @@ function AISandboxPage() {
         (e.key === 'r' && (e.metaKey || e.ctrlKey)) ||
         (e.key === 'F5');
 
-      if (isReload && (loading || generationProgress.isGenerating || loadingStage)) {
+      if (isReload && isGenerationActive) {
         e.preventDefault();
         setPendingNavigation('reload');
         setShowLeaveDialog(true);
@@ -457,7 +462,7 @@ function AISandboxPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [loading, generationProgress.isGenerating, loadingStage]);
+  }, [isGenerationActive]);
 
   useEffect(() => {
     if (chatMessagesRef.current) {
@@ -660,6 +665,7 @@ function AISandboxPage() {
     sandboxCreationRef.current = true;
     console.log('[createSandbox] Starting sandbox creation...');
     setLoading(true);
+    setIsSandboxIframeLoaded(false);
     setShowLoadingBackground(true);
     updateStatus('Creating sandbox...', false);
     setLoadingStage('initializing');
@@ -1680,16 +1686,22 @@ Tip: I automatically detect and install npm packages from your code imports (lik
         );
       }
 
-      // Show sandbox iframe - keep showing during edits, only hide during initial loading
-      if (sandboxData?.url) {
+      // Show sandbox iframe - only if we have content to show or are actively generating
+      if (sandboxData?.url && (generationProgress.isGenerating || generationProgress.files.length > 0)) {
         return (
-          <div className="relative w-full h-full bg-[#0a0f14]">
+          <div className="relative w-full h-full bg-[#020405] overflow-hidden">
+            <CircuitBackground />
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+
             <iframe
               ref={iframeRef}
               src={sandboxData.url}
-              className="w-full h-full border-none"
-              title="Open Lovable Sandbox"
+              className={`w-full h-full border-none transition-opacity duration-1000 ${isSandboxIframeLoaded ? 'opacity-100' : 'opacity-0'}`}
               allow="clipboard-write"
+              onLoad={() => {
+                console.log('[Iframe] Sandbox preview loaded');
+                setIsSandboxIframeLoaded(true);
+              }}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
             />
 
@@ -1755,7 +1767,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
             )}
 
             {/* Granular Loading Overlay (for stages like optimizing, analyzing, etc) */}
-            {loadingStage && !codeApplicationState.stage && (
+            {(loadingStage || !isSandboxIframeLoaded) && !codeApplicationState.stage && (
               <LoadingCard key="granular-loading">
                 <div className="flex flex-col items-center">
                   <div className="w-16 h-16 relative mb-8">
@@ -1765,20 +1777,25 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                   <h3 className="text-lg font-display font-medium text-white mb-1 uppercase tracking-wider">
                     {loadingStage === 'optimizing' ? 'Optimizing Environment' :
                       loadingStage === 'analyzing' ? 'Analyzing Assets' :
-                        loadingStage === 'generating' ? 'Generating Code' :
+                        (loadingStage === 'generating' || generationProgress.isGenerating) ? 'Assembling Interface' :
                           loadingStage === 'preparing' ? 'Preparing Sandbox' :
-                            'Working...'}
+                            loadingStage === 'initializing' ? 'Initializing Sandbox' :
+                              !isSandboxIframeLoaded ? 'Establishing Connection' :
+                                'Working...'}
                   </h3>
                   <p className="text-gray-500 text-sm font-mono text-center max-w-xs">
                     {loadingStage === 'optimizing' ? 'Checking packages and configuration...' :
                       loadingStage === 'analyzing' ? 'Extracting brand styles from website...' :
                         loadingStage === 'generating' ? 'Building your custom component...' :
                           loadingStage === 'preparing' ? 'Establishing secure preview channel...' :
-                            'Please wait while we process your request...'}
+                            loadingStage === 'initializing' ? 'Setting up container...' :
+                              !isSandboxIframeLoaded ? 'Waiting for preview to respond...' :
+                                'Please wait while we process your request...'}
                   </p>
                 </div>
               </LoadingCard>
             )}
+
             {/* Subtle "Generating" Indicator */}
             {
               generationProgress.isGenerating && generationProgress.isEdit && !codeApplicationState.stage && (
@@ -1797,6 +1814,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
               onClick={() => {
                 if (iframeRef.current && sandboxData?.url) {
                   console.log('[Manual Refresh] Forcing iframe reload...');
+                  setIsSandboxIframeLoaded(false);
                   const newSrc = `${sandboxData.url}?t=${Date.now()}&manual=true`;
                   iframeRef.current.src = newSrc;
                 }
@@ -1827,7 +1845,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                   <div className="text-xs text-gray-500 font-mono text-center">Systems initialized in fallback mode</div>
                 </div>
               </LoadingCard>
-            ) : sandboxData ? (
+            ) : (sandboxData && (loading || loadingStage || isStartingNewGeneration || generationProgress.isGenerating)) ? (
               <LoadingCard>
                 <div className="flex flex-col items-center">
                   <div className="w-16 h-16 relative mb-6">
@@ -1855,7 +1873,28 @@ Tip: I automatically detect and install npm packages from your code imports (lik
         </div>
       );
     }
-    return null;
+
+    // Fallback state - never return null (blank screen)
+    return (
+      <div className="flex flex-col items-center justify-center h-full bg-[#020405] text-white relative overflow-hidden">
+        <CircuitBackground />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,_rgba(6,182,212,0.05)_0%,_rgba(0,0,0,0)_70%)]" />
+
+        <div className="relative z-10 w-full h-full flex items-center justify-center px-6">
+          <LoadingCard>
+            <div className="flex flex-col items-center animate-in fade-in zoom-in duration-700">
+              <h2 className="text-3xl font-display font-bold text-white mb-4 tracking-tight">
+                Ready to Create
+              </h2>
+              <div className="h-px w-16 bg-gradient-to-r from-transparent via-gray-700 to-transparent mb-4" />
+              <p className="text-gray-400 font-light text-lg mb-4 max-w-sm text-center">
+                Describe your app in the chat to begin the generation process.
+              </p>
+            </div>
+          </LoadingCard>
+        </div>
+      </div>
+    );
   };
 
   const sendChatMessage = async (overrideMessage?: string | any) => {
@@ -3445,7 +3484,7 @@ Focus on the key sections and content, making it clean and modern.`;
           <a
             href="https://www.x-and.agency/"
             onClick={(e) => {
-              if (loading || generationProgress.isGenerating || loadingStage) {
+              if (isGenerationActive) {
                 e.preventDefault();
                 setPendingNavigation('https://www.x-and.agency/');
                 setShowLeaveDialog(true);
@@ -3518,7 +3557,7 @@ Focus on the key sections and content, making it clean and modern.`;
               {!hasInitialSubmission ? (
                 <div className="p-4 border-b border-white/10">
                   <SidebarInput
-                    shouldWarnLeave={loading || generationProgress.isGenerating || loadingStage !== null}
+                    shouldWarnLeave={isGenerationActive}
                     onWarnLeave={(target) => {
                       setPendingNavigation(target);
                       setShowLeaveDialog(true);

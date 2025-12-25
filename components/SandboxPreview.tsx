@@ -8,8 +8,8 @@ interface SandboxPreviewProps {
   sandboxUrl?: string; // Real URL from Vercel Sandbox API
 }
 
-export default function SandboxPreview({ 
-  type, 
+export default function SandboxPreview({
+  type,
   output,
   isLoading = false,
   sandboxUrl
@@ -86,23 +86,22 @@ export default function SandboxPreview({
             <div className="text-center">
               <Loader2 className="w-8 h-8 animate-spin mx-auto mb-2" />
               <p className="text-sm text-gray-400">
-                {!previewUrl 
-                  ? 'Setting up sandbox environment...' 
-                  : type === 'vite' 
-                    ? 'Starting Vite dev server...' 
+                {!previewUrl
+                  ? 'Setting up sandbox environment...'
+                  : type === 'vite'
+                    ? 'Starting Vite dev server...'
                     : 'Starting Next.js dev server...'
                 }
               </p>
             </div>
           </div>
         )}
-        
+
         {previewUrl && (
           <iframe
             key={iframeKey}
             src={previewUrl}
             className="w-full h-[600px] bg-white"
-            title={`${type} preview`}
             sandbox="allow-scripts allow-same-origin allow-forms"
           />
         )}
