@@ -601,6 +601,37 @@ print(f'✓ Vite restarted with PID: {process.pid}')
     }
 
     const data = await response.json();
+    const deploymentId = data.id;
+
+    // Poll for deployment ready state
+    // This ensures we wait for the build to finish before returning the URL
+    try {
+      let attempts = 0;
+      const maxAttempts = 30; // 30 attempts * 2s = 60s max wait
+
+      while (attempts < maxAttempts) {
+        const statusRes = await fetch(`https://api.vercel.com/v13/deployments/${deploymentId}${teamId ? `?teamId=${teamId}` : ''}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          if (statusData.readyState === 'READY') {
+            break;
+          }
+          if (statusData.readyState === 'ERROR') {
+            throw new Error(`Vercel deployment status reported an error: ${statusData.error?.message || 'Unknown error'}`);
+          }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        attempts++;
+      }
+    } catch (e) {
+      console.warn('Failed to verify deployment status, continuing anyway:', e);
+    }
 
     // Use the clean project alias which is automatically assigned for production deployments
     const cleanUrl = `${projectName}.vercel.app`;

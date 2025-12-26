@@ -703,9 +703,37 @@ body {
     }
 
     const data = await response.json();
+    const deploymentId = data.id;
 
-    // Deployment started, return the URL
-    // Note: It might take a minute to be fully functional, but we return the URL
+    // Poll for deployment ready state
+    // This ensures we wait for the build to finish before returning the URL
+    try {
+      let attempts = 0;
+      const maxAttempts = 30; // 30 attempts * 2s = 60s max wait
+
+      while (attempts < maxAttempts) {
+        const statusRes = await fetch(`https://api.vercel.com/v13/deployments/${deploymentId}${teamId ? `?teamId=${teamId}` : ''}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (statusRes.ok) {
+          const statusData = await statusRes.json();
+          if (statusData.readyState === 'READY') {
+            break;
+          }
+          if (statusData.readyState === 'ERROR') {
+            throw new Error(`Vercel deployment status reported an error: ${statusData.error?.message || 'Unknown error'}`);
+          }
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        attempts++;
+      }
+    } catch (e) {
+      console.warn('Failed to verify deployment status, continuing anyway:', e);
+    }
 
     // Check for alias (custom domain) which is preferred
     // For Vercel, the default production alias is usually project-name.vercel.app
