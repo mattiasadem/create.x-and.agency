@@ -632,7 +632,7 @@ body {
     return `${this.sandboxInfo.url}/${publicFileName}`;
   }
 
-  async publish(): Promise<{ url: string }> {
+  async publish(): Promise<{ url: string; inspectUrl?: string }> {
     if (!this.sandbox) {
       throw new Error('No active sandbox');
     }
@@ -669,8 +669,15 @@ body {
     // 3. Create deployment via Vercel API
     const url = `https://api.vercel.com/v13/deployments${teamId ? `?teamId=${teamId}` : ''}`;
 
-    // Generate a unique name for the deployment
-    const projectName = `x-and-projects-${Math.random().toString(36).substring(2, 10)}`;
+    // Generate a unique name for the deployment or use existing one if already deployed
+    // This allows updates to the same site instead of creating new ones
+    let projectName = this.sandboxInfo?.deployedProjectName;
+    if (!projectName) {
+      projectName = `x-and-projects-${Math.random().toString(36).substring(2, 10)}`;
+      if (this.sandboxInfo) {
+        this.sandboxInfo.deployedProjectName = projectName;
+      }
+    }
 
     const response = await fetch(url, {
       method: 'POST',
@@ -699,8 +706,39 @@ body {
 
     // Deployment started, return the URL
     // Note: It might take a minute to be fully functional, but we return the URL
+
+    // Check for alias (custom domain) which is preferred
+    // For Vercel, the default production alias is usually project-name.vercel.app
+    // We want to force this "clean" URL rather than the specific deployment URL which might be behind auth
+    // or contain username namespaces.
+    const cleanUrl = `${projectName}.vercel.app`;
+    const fullUrl = `https://${cleanUrl}`;
+
+    // Poll for readiness to avoid 404s on immediate redirect
+    // Vercel new projects can take a few seconds to propagate DNS/routing
+    try {
+      let attempts = 0;
+      const maxAttempts = 20; // 20 attempts * 500ms = 10s max wait
+
+      while (attempts < maxAttempts) {
+        try {
+          const res = await fetch(fullUrl, { method: 'HEAD' });
+          if (res.status === 200) {
+            break;
+          }
+        } catch (e) {
+          // Ignore network errors during polling
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+        attempts++;
+      }
+    } catch (e) {
+      console.warn('Failed to verify deployment readiness:', e);
+    }
+
     return {
-      url: `https://${data.url}`
+      url: fullUrl,
+      inspectUrl: data.inspectorUrl || undefined
     };
   }
 

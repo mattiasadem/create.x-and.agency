@@ -530,7 +530,7 @@ print(f'✓ Vite restarted with PID: {process.pid}')
     throw new Error('Download URL generation not supported by this sandbox version');
   }
 
-  async publish(): Promise<{ url: string }> {
+  async publish(): Promise<{ url: string; inspectUrl?: string }> {
     if (!this.sandbox) {
       throw new Error('No active sandbox');
     }
@@ -565,7 +565,16 @@ print(f'✓ Vite restarted with PID: {process.pid}')
 
     // 3. Create deployment via Vercel API
     const url = `https://api.vercel.com/v12/deployments${teamId ? `?teamId=${teamId}` : ''}`;
-    const projectName = `x-and-projects-${Math.random().toString(36).substring(2, 10)}`;
+
+    // Generate a unique name for the deployment or use existing one if already deployed
+    // This allows updates to the same site instead of creating new ones
+    let projectName = this.sandboxInfo?.deployedProjectName;
+    if (!projectName) {
+      projectName = `x-and-projects-${Math.random().toString(36).substring(2, 10)}`;
+      if (this.sandboxInfo) {
+        this.sandboxInfo.deployedProjectName = projectName;
+      }
+    }
 
     const response = await fetch(url, {
       method: 'POST',
@@ -592,8 +601,35 @@ print(f'✓ Vite restarted with PID: {process.pid}')
     }
 
     const data = await response.json();
+
+    // Use the clean project alias which is automatically assigned for production deployments
+    const cleanUrl = `${projectName}.vercel.app`;
+    const fullUrl = `https://${cleanUrl}`;
+
+    // Poll for readiness to avoid 404s on immediate redirect
+    // Vercel new projects can take a few seconds to propagate DNS/routing
+    try {
+      let attempts = 0;
+      const maxAttempts = 20; // 20 attempts * 500ms = 10s max wait
+
+      while (attempts < maxAttempts) {
+        try {
+          const res = await fetch(fullUrl, { method: 'HEAD' });
+          if (res.status === 200) {
+            break;
+          }
+        } catch (e) {
+          // Ignore network errors during polling
+        }
+        await new Promise(resolve => setTimeout(resolve, 500));
+        attempts++;
+      }
+    } catch (e) {
+      console.warn('Failed to verify deployment readiness:', e);
+    }
+
     return {
-      url: `https://${data.url}`,
+      url: fullUrl,
       inspectUrl: `https://vercel.com/${teamId || 'dashboard'}/deployments/${data.id}`
     };
   }

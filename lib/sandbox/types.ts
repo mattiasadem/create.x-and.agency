@@ -9,6 +9,7 @@ export interface SandboxInfo {
   url: string;
   provider: 'e2b' | 'vercel';
   createdAt: Date;
+  deployedProjectName?: string;
 }
 
 export interface CommandResult {

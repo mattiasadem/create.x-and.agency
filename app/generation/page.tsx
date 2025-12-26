@@ -3690,7 +3690,7 @@ Focus on the key sections and content, making it clean and modern.`;
                               href={sourceURL}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="text-black hover:text-gray-700 truncate max-w-[250px] font-medium"
+                              className="text-white hover:text-gray-300 truncate max-w-[250px] font-medium"
                               title={sourceURL}
                             >
                               {siteName}
