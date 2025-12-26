@@ -1202,10 +1202,11 @@ Tip: I automatically detect and install npm packages from your code imports (lik
   };
 
   const fetchSandboxFiles = async () => {
-    if (!sandboxData) return;
+    if (!sandboxData?.sandboxId) return;
 
     try {
-      const response = await fetch('/api/get-sandbox-files', {
+      // Pass sandboxId to ensure we connect to the right sandbox instance
+      const response = await fetch(`/api/get-sandbox-files?sandboxId=${sandboxData.sandboxId}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',

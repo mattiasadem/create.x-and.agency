@@ -11,6 +11,15 @@ Todo
   x-and
 </span>
 
+- [ ] if there is this error, fix
+Closed Port Error
+The sandbox ioem33ya0rdeoe47c4qc5 is running but there's no service running on port 5173.
+
+5173-ioem33ya0rdeoe47c4qc5.e2b.app
+Connection refused on port 5173
+Please ensure that your service is properly configured and running on the specified port.
+
+Check the sandbox logs for more information →
 
 Initializing secure sandbox environment...
 

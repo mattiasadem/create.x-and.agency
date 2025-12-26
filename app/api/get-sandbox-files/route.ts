@@ -1,75 +1,68 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { parseJavaScriptFile, buildComponentTree } from '@/lib/file-parser';
 import { FileManifest, FileInfo, RouteInfo } from '@/types/file-manifest';
+import { sandboxManager } from '@/lib/sandbox/sandbox-manager';
+
 // SandboxState type used implicitly through global.activeSandbox
 
 declare global {
   var activeSandbox: any;
 }
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
-    if (!global.activeSandbox) {
+    const searchParams = req.nextUrl.searchParams;
+    const sandboxId = searchParams.get('sandboxId');
+
+    if (!sandboxId) {
       return NextResponse.json({
         success: false,
-        error: 'No active sandbox'
+        error: 'No sandbox ID provided'
+      }, { status: 400 });
+    }
+
+    // Get or reconnect to the sandbox provider
+    const sandbox = await sandboxManager.getOrCreateProvider(sandboxId);
+
+    if (!sandbox) {
+      return NextResponse.json({
+        success: false,
+        error: 'Sandbox not found or inactive'
       }, { status: 404 });
     }
 
-    console.log('[get-sandbox-files] Fetching and analyzing file structure...');
-    
+    // Set global for backward compatibility with utility functions if needed
+    global.activeSandbox = sandbox;
+
+    console.log(`[get-sandbox-files] Fetching files for sandbox ${sandboxId}...`);
+
     // Get list of all relevant files
-    const findResult = await global.activeSandbox.runCommand({
-      cmd: 'find',
-      args: [
-        '.',
-        '-name', 'node_modules', '-prune', '-o',
-        '-name', '.git', '-prune', '-o',
-        '-name', 'dist', '-prune', '-o',
-        '-name', 'build', '-prune', '-o',
-        '-type', 'f',
-        '(',
-        '-name', '*.jsx',
-        '-o', '-name', '*.js',
-        '-o', '-name', '*.tsx',
-        '-o', '-name', '*.ts',
-        '-o', '-name', '*.css',
-        '-o', '-name', '*.json',
-        ')',
-        '-print'
-      ]
-    });
-    
+    const findResult = await sandbox.runCommand('find . -type f -not -path "*/node_modules*" -not -path "*/.git*" -not -path "*/dist*" -not -path "*/build*"');
+
     if (findResult.exitCode !== 0) {
       throw new Error('Failed to list files');
     }
-    
-    const fileList = (await findResult.stdout()).split('\n').filter((f: string) => f.trim());
+
+    const fileList = findResult.stdout.split('\n').filter((f: string) => f.trim());
     console.log('[get-sandbox-files] Found', fileList.length, 'files');
-    
+
     // Read content of each file (limit to reasonable sizes)
     const filesContent: Record<string, string> = {};
-    
+
     for (const filePath of fileList) {
       try {
         // Check file size first
-        const statResult = await global.activeSandbox.runCommand({
-          cmd: 'stat',
-          args: ['-f', '%z', filePath]
-        });
-        
+        const statResult = await sandbox.runCommand(`stat -f %z "${filePath}"`);
+
         if (statResult.exitCode === 0) {
-          const fileSize = parseInt(await statResult.stdout());
-          
+          const fileSize = parseInt(statResult.stdout);
+
           // Only read files smaller than 10KB
           if (fileSize < 10000) {
-            const catResult = await global.activeSandbox.runCommand({
-              cmd: 'cat',
-              args: [filePath]
-            });
-            
+            const catResult = await sandbox.runCommand(`cat "${filePath}"`);
+
             if (catResult.exitCode === 0) {
-              const content = await catResult.stdout();
+              const content = catResult.stdout;
               // Remove leading './' from path
               const relativePath = filePath.replace(/^\.\//, '');
               filesContent[relativePath] = content;
@@ -82,19 +75,16 @@ export async function GET() {
         continue;
       }
     }
-    
+
     // Get directory structure
-    const treeResult = await global.activeSandbox.runCommand({
-      cmd: 'find',
-      args: ['.', '-type', 'd', '-not', '-path', '*/node_modules*', '-not', '-path', '*/.git*']
-    });
-    
+    const treeResult = await sandbox.runCommand('find . -type d -not -path "*/node_modules*" -not -path "*/.git*"');
+
     let structure = '';
     if (treeResult.exitCode === 0) {
-      const dirs = (await treeResult.stdout()).split('\n').filter((d: string) => d.trim());
+      const dirs = treeResult.stdout.split('\n').filter((d: string) => d.trim());
       structure = dirs.slice(0, 50).join('\n'); // Limit to 50 lines
     }
-    
+
     // Build enhanced file manifest
     const fileManifest: FileManifest = {
       files: {},
@@ -104,11 +94,11 @@ export async function GET() {
       styleFiles: [],
       timestamp: Date.now(),
     };
-    
+
     // Process each file
     for (const [relativePath, content] of Object.entries(filesContent)) {
       const fullPath = `/${relativePath}`;
-      
+
       // Create base file info
       const fileInfo: FileInfo = {
         content: content,
@@ -117,38 +107,38 @@ export async function GET() {
         relativePath,
         lastModified: Date.now(),
       };
-      
+
       // Parse JavaScript/JSX files
       if (relativePath.match(/\.(jsx?|tsx?)$/)) {
         const parseResult = parseJavaScriptFile(content, fullPath);
         Object.assign(fileInfo, parseResult);
-        
+
         // Identify entry point
         if (relativePath === 'src/main.jsx' || relativePath === 'src/index.jsx') {
           fileManifest.entryPoint = fullPath;
         }
-        
+
         // Identify App.jsx
         if (relativePath === 'src/App.jsx' || relativePath === 'App.jsx') {
           fileManifest.entryPoint = fileManifest.entryPoint || fullPath;
         }
       }
-      
+
       // Track style files
       if (relativePath.endsWith('.css')) {
         fileManifest.styleFiles.push(fullPath);
         fileInfo.type = 'style';
       }
-      
+
       fileManifest.files[fullPath] = fileInfo;
     }
-    
+
     // Build component tree
     fileManifest.componentTree = buildComponentTree(fileManifest.files);
-    
+
     // Extract routes (simplified - looks for Route components or page pattern)
     fileManifest.routes = extractRoutes(fileManifest.files);
-    
+
     // Update global file cache with manifest
     if (global.sandboxState?.fileCache) {
       global.sandboxState.fileCache.manifest = fileManifest;
@@ -173,13 +163,13 @@ export async function GET() {
 
 function extractRoutes(files: Record<string, FileInfo>): RouteInfo[] {
   const routes: RouteInfo[] = [];
-  
+
   // Look for React Router usage
   for (const [path, fileInfo] of Object.entries(files)) {
     if (fileInfo.content.includes('<Route') || fileInfo.content.includes('createBrowserRouter')) {
       // Extract route definitions (simplified)
       const routeMatches = fileInfo.content.matchAll(/path=["']([^"']+)["'].*(?:element|component)={([^}]+)}/g);
-      
+
       for (const match of routeMatches) {
         const [, routePath] = match;
         // componentRef available in match but not used currently
@@ -189,20 +179,20 @@ function extractRoutes(files: Record<string, FileInfo>): RouteInfo[] {
         });
       }
     }
-    
+
     // Check for Next.js style pages
     if (fileInfo.relativePath.startsWith('pages/') || fileInfo.relativePath.startsWith('src/pages/')) {
       const routePath = '/' + fileInfo.relativePath
         .replace(/^(src\/)?pages\//, '')
         .replace(/\.(jsx?|tsx?)$/, '')
         .replace(/index$/, '');
-        
+
       routes.push({
         path: routePath,
         component: path,
       });
     }
   }
-  
+
   return routes;
 }
