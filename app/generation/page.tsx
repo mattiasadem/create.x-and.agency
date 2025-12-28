@@ -1972,7 +1972,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
     }
 
     // Start sandbox creation in parallel if needed
-    let sandboxPromise: Promise<void> | null = null;
+    let sandboxPromise: Promise<SandboxData | null> | null = null;
     let sandboxCreating = false;
 
     if (!sandboxData) {
