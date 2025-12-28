@@ -299,12 +299,25 @@ function AISandboxPage() {
 
       setLoading(true);
       try {
+        // If we have a sandbox ID in the URL, try to reconnect first
         if (sandboxIdParam) {
-          console.log('[home] Attempting to restore sandbox:', sandboxIdParam);
-          // For now, just create a new sandbox - you could enhance this to actually restore
-          // the specific sandbox if your backend supports it
-          sandboxCreated = true;
-          await createSandbox(true);
+          console.log('[home] Attempting to reconnect to sandbox:', sandboxIdParam);
+
+          // Check if the sandbox is still active
+          const status = await checkSandboxStatus(sandboxIdParam);
+
+          if (status.active && status.healthy) {
+            console.log('[home] Successfully reconnected to sandbox:', sandboxIdParam);
+            // Sandbox is good, we don't need to create a new one
+            if (storedUrl && isMounted) {
+              sessionStorage.setItem('autoStart', 'true');
+            }
+            return;
+          } else {
+            console.log('[home] Failed to reconnect to sandbox, creating new one...');
+            sandboxCreated = true;
+            await createSandbox(true);
+          }
         } else {
           console.log('[home] No sandbox in URL, creating new sandbox automatically...');
           sandboxCreated = true;
@@ -615,9 +628,10 @@ function AISandboxPage() {
     }
   };
 
-  const checkSandboxStatus = async () => {
+  const checkSandboxStatus = async (sandboxId?: string) => {
     try {
-      const response = await fetch('/api/sandbox-status');
+      const url = sandboxId ? `/api/sandbox-status?sandboxId=${sandboxId}` : '/api/sandbox-status';
+      const response = await fetch(url);
       const data = await response.json();
 
       if (data.active && data.healthy && data.sandboxData) {
@@ -626,10 +640,12 @@ function AISandboxPage() {
         updateStatus('Sandbox active', true);
         // Fetch files to ensure UI is in sync
         setTimeout(fetchSandboxFiles, 100);
+        return { active: true, healthy: true };
       } else if (data.active && !data.healthy) {
         // Sandbox exists but not responding
         updateStatus('Sandbox not responding', false);
         // Keep existing sandboxData if we have it - don't clear it
+        return { active: true, healthy: false };
       } else {
         // Only clear sandboxData if we don't already have it or if we're explicitly checking from a fresh state
         // This prevents clearing sandboxData during normal operation when it should persist
@@ -642,6 +658,7 @@ function AISandboxPage() {
           console.log('[checkSandboxStatus] Keeping existing sandboxData, sandbox inactive but data preserved');
           updateStatus('Sandbox status unknown', false);
         }
+        return { active: false, healthy: false };
       }
     } catch (error) {
       console.error('Failed to check sandbox status:', error);
@@ -652,6 +669,7 @@ function AISandboxPage() {
       } else {
         updateStatus('Status check failed', false);
       }
+      return { active: false, healthy: false };
     }
   };
 
