@@ -2314,11 +2314,18 @@ Tip: I automatically detect and install npm packages from your code imports (lik
 
         // Wait for sandbox creation if it's still in progress
         let activeSandboxData = sandboxData;
+        console.log('[startGeneration] Before sandbox wait:', {
+          hasSandboxPromise: !!sandboxPromise,
+          sandboxData: sandboxData?.sandboxId,
+          activeSandboxData: activeSandboxData?.sandboxId
+        });
+
         if (sandboxPromise) {
           setLoadingStage('preparing');
           addChatMessage('Waiting for sandbox to be ready...', 'system');
           try {
             const newSandboxData = await sandboxPromise;
+            console.log('[startGeneration] sandboxPromise resolved:', newSandboxData);
             if (newSandboxData != null) {
               activeSandboxData = newSandboxData;
               // Also update the state for future use
@@ -2333,6 +2340,12 @@ Tip: I automatically detect and install npm packages from your code imports (lik
           }
         }
 
+        console.log('[startGeneration] About to apply code:', {
+          activeSandboxData: activeSandboxData?.sandboxId,
+          hasGeneratedCode: !!generatedCode,
+          generatedCodeLength: generatedCode?.length
+        });
+
         if (activeSandboxData && generatedCode) {
           // For new sandbox creations (especially Vercel), add a delay to ensure Vite is ready
           if (sandboxCreating) {
@@ -2340,9 +2353,13 @@ Tip: I automatically detect and install npm packages from your code imports (lik
             await new Promise(resolve => setTimeout(resolve, 2000));
           }
 
+          console.log('[startGeneration] Calling applyGeneratedCode...');
           // Use isEdit flag that was determined at the start
           // Pass the sandbox data from the promise if it's different from the state
           await applyGeneratedCode(generatedCode, isEdit, activeSandboxData !== sandboxData ? activeSandboxData : undefined);
+          console.log('[startGeneration] applyGeneratedCode completed');
+        } else {
+          console.error('[startGeneration] NOT applying code! activeSandboxData:', activeSandboxData, 'generatedCode length:', generatedCode?.length);
         }
       }
 
