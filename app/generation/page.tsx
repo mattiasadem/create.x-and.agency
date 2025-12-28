@@ -109,7 +109,7 @@ function AISandboxPage() {
   const [targetUrl, setTargetUrl] = useState<string>('');
   const [sidebarScrolled, setSidebarScrolled] = useState(false);
   const [screenshotCollapsed, setScreenshotCollapsed] = useState(false);
-  const [loadingStage, setLoadingStage] = useState<'initializing' | 'planning' | 'preparing' | 'optimizing' | 'analyzing' | 'generating' | 'gathering' | null>(null);
+  const [loadingStage, setLoadingStage] = useState<'initializing' | 'planning' | 'preparing' | 'optimizing' | 'analyzing' | 'generating' | 'gathering' | 'connecting' | null>(null);
   const [isStartingNewGeneration, setIsStartingNewGeneration] = useState(false);
   const [sandboxFiles, setSandboxFiles] = useState<Record<string, string>>({});
   const [hasInitialSubmission, setHasInitialSubmission] = useState<boolean>(false);
@@ -711,7 +711,7 @@ function AISandboxPage() {
         log('Sandbox created successfully!');
         log(`Sandbox ID: ${data.sandboxId}`);
         log(`URL: ${data.url}`);
-        setLoadingStage(null);
+        setLoadingStage('connecting'); // Show connecting until iframe loads
 
         // Update URL with sandbox ID
         const newParams = new URLSearchParams(searchParams.toString());
@@ -1744,6 +1744,7 @@ Tip: I automatically detect and install npm packages from your code imports (lik
               onLoad={() => {
                 console.log('[Iframe] Sandbox preview loaded');
                 setIsSandboxIframeLoaded(true);
+                setLoadingStage(null); // Clear any loading stage now that iframe is ready
               }}
               sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-modals"
             />
@@ -1818,22 +1819,26 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                     <div className="absolute inset-0 border-2 border-cyan-500 rounded-full animate-spin border-t-transparent shadow-[0_0_10px_rgba(6,182,212,0.5)]" />
                   </div>
                   <h3 className="text-lg font-display font-medium text-white mb-1 uppercase tracking-wider">
-                    {loadingStage === 'optimizing' ? 'Optimizing Environment' :
-                      loadingStage === 'analyzing' ? 'Analyzing Assets' :
-                        (loadingStage === 'generating' || generationProgress.isGenerating) ? 'Assembling Interface' :
-                          loadingStage === 'preparing' ? 'Preparing Sandbox' :
-                            loadingStage === 'initializing' ? 'Initializing Sandbox' :
-                              !isSandboxIframeLoaded ? 'Establishing Connection' :
-                                'Working...'}
+                    {loadingStage === 'connecting' ? 'Connecting to Sandbox' :
+                      loadingStage === 'optimizing' ? 'Optimizing Environment' :
+                        loadingStage === 'analyzing' ? 'Analyzing Assets' :
+                          loadingStage === 'planning' ? 'Planning' :
+                            (loadingStage === 'generating' || generationProgress.isGenerating) ? 'Assembling Interface' :
+                              loadingStage === 'preparing' ? 'Preparing Sandbox' :
+                                loadingStage === 'initializing' ? 'Initializing Sandbox' :
+                                  !isSandboxIframeLoaded ? 'Establishing Connection' :
+                                    'Working...'}
                   </h3>
                   <p className="text-gray-500 text-sm font-mono text-center max-w-xs">
-                    {loadingStage === 'optimizing' ? 'Checking packages and configuration...' :
-                      loadingStage === 'analyzing' ? 'Extracting brand styles from website...' :
-                        loadingStage === 'generating' ? 'Building your custom component...' :
-                          loadingStage === 'preparing' ? 'Establishing secure preview channel...' :
-                            loadingStage === 'initializing' ? 'Setting up container...' :
-                              !isSandboxIframeLoaded ? 'Waiting for preview to respond...' :
-                                'Please wait while we process your request...'}
+                    {loadingStage === 'connecting' ? 'Waiting for sandbox preview to respond...' :
+                      loadingStage === 'optimizing' ? 'Checking packages and configuration...' :
+                        loadingStage === 'analyzing' ? 'Extracting brand styles from website...' :
+                          loadingStage === 'planning' ? 'Creating sandbox while I plan your app...' :
+                            loadingStage === 'generating' ? 'Building your custom component...' :
+                              loadingStage === 'preparing' ? 'Establishing secure preview channel...' :
+                                loadingStage === 'initializing' ? 'Setting up container...' :
+                                  !isSandboxIframeLoaded ? 'Waiting for preview to respond...' :
+                                    'Please wait while we process your request...'}
                   </p>
                 </div>
               </LoadingCard>
