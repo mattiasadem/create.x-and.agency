@@ -902,7 +902,44 @@ Tip: I automatically detect and install npm packages from your code imports (lik
                 case 'complete':
                   finalData = data;
                   setCodeApplicationState({ stage: 'complete' });
-                  // Clear the state after a delay
+
+                  // Show connecting state while waiting for Vite to be ready
+                  setLoadingStage('connecting');
+
+                  // Poll until sandbox URL responds (Vite is ready)
+                  const sandboxUrl = sandboxData?.url;
+                  if (sandboxUrl) {
+                    let attempts = 0;
+                    const maxAttempts = 15; // 15 attempts * 2s = 30 seconds max
+
+                    const waitForVite = async () => {
+                      while (attempts < maxAttempts) {
+                        attempts++;
+                        try {
+                          // Try to fetch the sandbox URL
+                          const response = await fetch(sandboxUrl, {
+                            method: 'HEAD',
+                            mode: 'no-cors' // Allow cross-origin
+                          });
+                          // If we get here without error, Vite is responding
+                          console.log('[applyGeneratedCode] Vite is ready after', attempts, 'attempts');
+                          break;
+                        } catch {
+                          console.log('[applyGeneratedCode] Waiting for Vite...', attempts);
+                          await new Promise(resolve => setTimeout(resolve, 2000));
+                        }
+                      }
+                      // Clear loading stage - Vite should be ready now
+                      setLoadingStage(null);
+                    };
+
+                    waitForVite();
+                  } else {
+                    // No sandbox URL, just clear after delay
+                    setTimeout(() => setLoadingStage(null), 3000);
+                  }
+
+                  // Clear the code application state after a delay
                   setTimeout(() => {
                     setCodeApplicationState({ stage: null });
                   }, 3000);
