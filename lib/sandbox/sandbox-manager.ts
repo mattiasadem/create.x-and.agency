@@ -16,22 +16,29 @@ class SandboxManager {
    * Get or create a sandbox provider for the given sandbox ID
    */
   async getOrCreateProvider(sandboxId: string): Promise<SandboxProvider | null> {
+    console.log(`[SandboxManager] getOrCreateProvider called for sandboxId=${sandboxId}`);
+
     // Check if we already have this sandbox
     const existing = this.sandboxes.get(sandboxId);
     if (existing) {
+      console.log(`[SandboxManager] Found existing provider in memory for ${sandboxId}`);
       existing.lastAccessed = new Date();
       return existing.provider;
     }
 
     // Try to reconnect to existing sandbox
+    console.log(`[SandboxManager] No in-memory provider found, attempting E2B reconnection for ${sandboxId}`);
 
     try {
       const provider = SandboxFactory.create();
+      console.log(`[SandboxManager] Created new provider instance, checking for reconnect method...`);
 
       // For E2B provider, try to reconnect (checking for reconnect method availability safely)
       if ('reconnect' in provider && typeof (provider as any).reconnect === 'function') {
+        console.log(`[SandboxManager] Reconnect method found, calling provider.reconnect(${sandboxId})...`);
         // E2B sandboxes can be reconnected using the sandbox ID
         const reconnected = await (provider as any).reconnect(sandboxId);
+        console.log(`[SandboxManager] Reconnection result: ${reconnected ? 'SUCCESS' : 'FAILED'}`);
         if (reconnected) {
           this.sandboxes.set(sandboxId, {
             sandboxId,
@@ -40,13 +47,17 @@ class SandboxManager {
             lastAccessed: new Date()
           });
           this.activeSandboxId = sandboxId;
+          console.log(`[SandboxManager] Provider registered and set as active`);
           return provider;
         }
+      } else {
+        console.log(`[SandboxManager] No reconnect method found on provider (Vercel provider or other)`);
       }
 
       // For Vercel or if reconnection failed
       // If we failed to reconnect, we should NOT return a new provider for the expected ID
       // because that would imply we have the session but we don't.
+      console.log(`[SandboxManager] Reconnection failed or not available, returning null`);
       return null;
     } catch (error) {
       console.error(`[SandboxManager] Error reconnecting to sandbox ${sandboxId}:`, error);
