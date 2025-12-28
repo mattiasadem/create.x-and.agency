@@ -2016,11 +2016,43 @@ Tip: I automatically detect and install npm packages from your code imports (lik
       sandboxCreating = true;
       setLoadingStage('planning');
       addChatMessage('Creating sandbox while I plan your app...', 'system');
-      sandboxPromise = createSandbox(true).catch((error: any) => {
-        setLoadingStage(null);
-        addChatMessage(`Failed to create sandbox: ${error.message}`, 'system');
-        throw error;
-      });
+
+      // createSandbox may return null if already in progress, so we need to poll for sandboxData
+      sandboxPromise = (async (): Promise<SandboxData | null> => {
+        const result = await createSandbox(true).catch((error: any) => {
+          setLoadingStage(null);
+          addChatMessage(`Failed to create sandbox: ${error.message}`, 'system');
+          throw error;
+        });
+
+        // If createSandbox returned data, use it
+        if (result) {
+          return result;
+        }
+
+        // Otherwise, poll for sandboxData state (sandbox being created elsewhere)
+        console.log('[startGeneration] createSandbox returned null, polling for sandboxData...');
+        let attempts = 0;
+        const maxAttempts = 30; // 30 attempts * 500ms = 15 seconds max
+
+        while (attempts < maxAttempts) {
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 500));
+
+          // We can't access the latest sandboxData state here directly in async
+          // So we check if the iframe is loaded or sandbox URL is in the window
+          const currentSandboxId = new URLSearchParams(window.location.search).get('sandbox');
+          if (currentSandboxId) {
+            // Try to get sandbox info from current state
+            console.log('[startGeneration] Found sandbox ID in URL:', currentSandboxId);
+            // Return a minimal sandbox data that can be used
+            return null; // Let it fall through to use the state
+          }
+        }
+
+        console.error('[startGeneration] Timed out waiting for sandbox');
+        return null;
+      })();
     }
 
     // Determine if this is an edit
@@ -2367,6 +2399,29 @@ Tip: I automatically detect and install npm packages from your code imports (lik
               activeSandboxData = newSandboxData;
               // Also update the state for future use
               setSandboxData(newSandboxData);
+            } else {
+              // sandboxPromise returned null, try to get from URL
+              const currentSandboxId = new URLSearchParams(window.location.search).get('sandbox');
+              console.log('[startGeneration] sandboxPromise null, checking URL for sandbox:', currentSandboxId);
+              if (currentSandboxId) {
+                // Poll for sandboxData to be set in state
+                for (let i = 0; i < 20; i++) {
+                  await new Promise(resolve => setTimeout(resolve, 500));
+                  // Get sandbox URL from current iframe if available
+                  if (iframeRef.current?.src) {
+                    const iframeSrc = iframeRef.current.src;
+                    if (iframeSrc.includes('e2b.app') || iframeSrc.includes('-')) {
+                      console.log('[startGeneration] Found sandbox URL from iframe:', iframeSrc);
+                      activeSandboxData = {
+                        sandboxId: currentSandboxId,
+                        url: iframeSrc,
+                        success: true
+                      } as SandboxData;
+                      break;
+                    }
+                  }
+                }
+              }
             }
             // Remove the waiting message
             setLoadingStage(null);
