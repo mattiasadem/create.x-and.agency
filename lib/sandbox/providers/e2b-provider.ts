@@ -442,8 +442,8 @@ print(f'✓ Vite dev server started with PID: {process.pid}')
 print('Waiting for server to be ready...')
     `);
 
-    // Wait for Vite to be ready
-    await new Promise(resolve => setTimeout(resolve, appConfig.e2b.viteStartupDelay));
+    // Wait for Vite to be ready by checking the port
+    await this.waitForServer(5173);
 
     // Track initial files
     this.existingFiles.add('src/App.jsx');
@@ -454,6 +454,48 @@ print('Waiting for server to be ready...')
     this.existingFiles.add('vite.config.js');
     this.existingFiles.add('tailwind.config.js');
     this.existingFiles.add('postcss.config.js');
+  }
+
+  async waitForServer(port: number, timeoutMs: number = 60000): Promise<void> {
+    if (!this.sandbox) {
+      throw new Error('No active sandbox');
+    }
+
+    console.log(`[E2BProvider] Waiting for server on port ${port}...`);
+
+    // Poll the server using a Python script that checks the socket
+    const pollScript = `
+import socket
+import time
+import sys
+
+def check_port(port, timeout=60):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                s.settimeout(1)
+                result = s.connect_ex(('localhost', port))
+                if result == 0:
+                    print(f"✓ Port {port} is open")
+                    return True
+        except Exception as e:
+            pass
+        time.sleep(0.5)
+    
+    print(f"✗ Timeout waiting for port {port}")
+    sys.exit(1)
+
+check_port(${port}, ${timeoutMs / 1000})
+    `;
+
+    try {
+      await this.sandbox.runCode(pollScript);
+      console.log(`[E2BProvider] Server is ready on port ${port}`);
+    } catch (error) {
+      console.error(`[E2BProvider] Failed to wait for server on port ${port}:`, error);
+      throw new Error(`Timeout waiting for server on port ${port}`);
+    }
   }
 
   async restartViteServer(): Promise<void> {
@@ -487,8 +529,8 @@ process = subprocess.Popen(
 print(f'✓ Vite restarted with PID: {process.pid}')
     `);
 
-    // Wait for Vite to be ready
-    await new Promise(resolve => setTimeout(resolve, appConfig.e2b.viteStartupDelay));
+    // Wait for Vite to be ready by checking the port
+    await this.waitForServer(5173);
   }
 
   getSandboxUrl(): string | null {
